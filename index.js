@@ -1,12 +1,12 @@
 const admin = require("firebase-admin");
 const express = require("express");
-const crypto = require('crypto');
-const session = require('express-session');
-const path = require('path');
-const multer = require('multer');
+const crypto = require("crypto");
+const session = require("express-session");
+const path = require("path");
+const multer = require("multer");
 
 // Load environment variables
-require('dotenv').config({ debug: true });
+require("dotenv").config({ debug: true });
 
 // Validate required environment variables
 if (!process.env.FIREBASE_PRIVATE_KEY) {
@@ -21,22 +21,22 @@ try {
     type: process.env.FIREBASE_TYPE,
     project_id: process.env.FIREBASE_PROJECT_ID,
     private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
     client_email: process.env.FIREBASE_CLIENT_EMAIL,
     client_id: process.env.FIREBASE_CLIENT_ID,
     auth_uri: process.env.FIREBASE_AUTH_URI,
     token_uri: process.env.FIREBASE_TOKEN_URI,
     auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_CERT_URL,
     client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
-    universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN
+    universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN,
   };
 
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: process.env.FIREBASE_DATABASE_URL,
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
   });
-  
+
   console.log("✅ Firebase initialized successfully with environment variables");
 } catch (error) {
   console.error("❌ Error initializing Firebase:", error.message);
@@ -46,7 +46,7 @@ const db = admin.firestore();
 const bucket = admin.storage().bucket();
 const app = express();
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 
 // Debugging middleware
 app.use((req, res, next) => {
@@ -54,76 +54,78 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: '50mb' })); // Increased limit for video data
+app.use(express.json({ limit: "50mb" })); // Increased limit for video data
 app.use(express.urlencoded({ extended: true }));
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
 // Session setup
-app.use(session({
-  secret: 'your-session-secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false }
-}));
+app.use(
+  session({
+    secret: "your-session-secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false },
+  })
+);
 
 // Multer setup for video uploads
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Admin credentials
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = '##admin123456';
+const ADMIN_USERNAME = "admin";
+const ADMIN_PASSWORD = "##admin123456";
 
 // Question banks (simplified for testing)
 const questionBanks = {
   writing: [
     { id: 1, question: "Write an essay on climate change and its impact on global economy (300-400 words)." },
-    { id: 2, question: "Describe your most significant leadership experience and what you learned from it." }
+    { id: 2, question: "Describe your most significant leadership experience and what you learned from it." },
   ],
   political: [
     {
-      "id": 1,
-      "question": "What should be the government's primary role in the economy?",
-      "options": [
-        {"text": "Minimal intervention - let markets regulate themselves"},
-        {"text": "Active regulation to prevent corporate abuses"},
-        {"text": "Strategic investment in key industries"},
-        {"text": "Comprehensive economic planning and control"}
-      ]
+      id: 1,
+      question: "What should be the government's primary role in the economy?",
+      options: [
+        { text: "Minimal intervention - let markets regulate themselves" },
+        { text: "Active regulation to prevent corporate abuses" },
+        { text: "Strategic investment in key industries" },
+        { text: "Comprehensive economic planning and control" },
+      ],
     },
     {
-      "id": 2,
-      "question": "How should healthcare be organized?",
-      "options": [
-        {"text": "Fully private system with minimal government involvement"},
-        {"text": "Public-private partnership with regulated insurance markets"},
-        {"text": "Universal public healthcare funded by taxes"},
-        {"text": "State-controlled healthcare with private options"}
-      ]
-    }
+      id: 2,
+      question: "How should healthcare be organized?",
+      options: [
+        { text: "Fully private system with minimal government involvement" },
+        { text: "Public-private partnership with regulated insurance markets" },
+        { text: "Universal public healthcare funded by taxes" },
+        { text: "State-controlled healthcare with private options" },
+      ],
+    },
   ],
   aptitude: [
     {
-      "id": 1,
-      "question": "Pointing to a photograph of boy Ramesh said, 'He is the son of the only son of my mother.' How is Ramesh related to that Boy?",
-      "options": [
-        { "text": "Brother", "isCorrect": false },
-        { "text": "Father", "isCorrect": true },
-        { "text": "Uncle", "isCorrect": false },
-        { "text": "Cousin", "isCorrect": false }
-      ]
+      id: 1,
+      question: "Pointing to a photograph of boy Ramesh said, 'He is the son of the only son of my mother.' How is Ramesh related to that Boy?",
+      options: [
+        { text: "Brother", isCorrect: false },
+        { text: "Father", isCorrect: true },
+        { text: "Uncle", isCorrect: false },
+        { text: "Cousin", isCorrect: false },
+      ],
     },
     {
-      "id": 2,
-      "question": "A shopkeeper buys a pen for ₹50 and sells it for ₹65. What is the profit percentage?",
-      "options": [
-        { "text": "25%", "isCorrect": false },
-        { "text": "30%", "isCorrect": true },
-        { "text": "35%", "isCorrect": false },
-        { "text": "20%", "isCorrect": false }
-      ]
-    }
-  ]
+      id: 2,
+      question: "A shopkeeper buys a pen for ₹50 and sells it for ₹65. What is the profit percentage?",
+      options: [
+        { text: "25%", isCorrect: false },
+        { text: "30%", isCorrect: true },
+        { text: "35%", isCorrect: false },
+        { text: "20%", isCorrect: false },
+      ],
+    },
+  ],
 };
 
 // Helper functions
@@ -137,14 +139,14 @@ function shuffle(array) {
 }
 
 function generateUniqueToken() {
-  return crypto.randomBytes(32).toString('hex');
+  return crypto.randomBytes(32).toString("hex");
 }
 
 function selectQuestionsForCandidate() {
   return {
     writing: shuffle([...questionBanks.writing]).slice(0, 2),
     political: shuffle([...questionBanks.political]).slice(0, 2),
-    aptitude: shuffle([...questionBanks.aptitude]).slice(0, 2)
+    aptitude: shuffle([...questionBanks.aptitude]).slice(0, 2),
   };
 }
 
@@ -153,28 +155,28 @@ const isAdmin = (req, res, next) => {
   if (req.session.isAdmin) {
     next();
   } else {
-    res.redirect('/admin/login');
+    res.redirect("/admin/login");
   }
 };
 
 // Routes
 
 // Test route to check if EJS is working
-app.get('/test-template', (req, res) => {
-  res.render('candidate/simple-test', {
-    token: 'test-token',
-    name: 'Test Candidate',
-    email: 'test@example.com'
+app.get("/test-template", (req, res) => {
+  res.render("candidate/simple-test", {
+    token: "test-token",
+    name: "Test Candidate",
+    email: "test@example.com",
   });
 });
 
 // Diagnostic route to check candidate data
-app.get('/debug/candidate/:token', async (req, res) => {
+app.get("/debug/candidate/:token", async (req, res) => {
   const { token } = req.params;
   try {
-    const doc = await db.collection('candidates').doc(token).get();
+    const doc = await db.collection("candidates").doc(token).get();
     if (!doc.exists) {
-      return res.json({ error: 'Candidate not found' });
+      return res.json({ error: "Candidate not found" });
     }
     const candidate = doc.data();
     res.json({
@@ -186,7 +188,9 @@ app.get('/debug/candidate/:token', async (req, res) => {
       examCompleted: candidate.examCompleted,
       currentModule: candidate.currentModule,
       expiresAt: candidate.expiresAt ? candidate.expiresAt.toDate() : null,
-      assignedQuestions: candidate.assignedQuestions ? Object.keys(candidate.assignedQuestions) : 'none'
+      assignedQuestions: candidate.assignedQuestions
+        ? Object.keys(candidate.assignedQuestions)
+        : "none",
     });
   } catch (error) {
     res.json({ error: error.message });
@@ -194,117 +198,118 @@ app.get('/debug/candidate/:token', async (req, res) => {
 });
 
 // Admin Login Routes
-app.get('/admin/login', (req, res) => {
-  res.render('admin/login', { error: null });
+app.get("/admin/login", (req, res) => {
+  res.render("admin/login", { error: null });
 });
 
-app.post('/admin/login', (req, res) => {
+app.post("/admin/login", (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     req.session.isAdmin = true;
-    res.redirect('/admin/dashboard');
+    res.redirect("/admin/dashboard");
   } else {
-    res.render('admin/login', { error: 'Invalid username or password' });
+    res.render("admin/login", { error: "Invalid username or password" });
   }
 });
 
-app.get('/admin/logout', (req, res) => {
+app.get("/admin/logout", (req, res) => {
   req.session.destroy();
-  res.redirect('/admin/login');
+  res.redirect("/admin/login");
 });
 
 // Admin Routes
-app.get('/admin/dashboard', isAdmin, async (req, res) => {
+app.get("/admin/dashboard", isAdmin, async (req, res) => {
   try {
-    const candidatesSnapshot = await db.collection('candidates').get();
-    const candidates = candidatesSnapshot.docs.map(doc => ({
+    const candidatesSnapshot = await db.collection("candidates").get();
+    const candidates = candidatesSnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     }));
-    
-    res.render('admin/dashboard', { 
+
+    res.render("admin/dashboard", {
       candidates,
       error: req.query.error || null,
-      successMessage: req.query.success || null
+      successMessage: req.query.success || null,
     });
   } catch (error) {
-    console.error('Error fetching candidates:', error);
-    res.status(500).render('admin/dashboard', { 
+    console.error("Error fetching candidates:", error);
+    res.status(500).render("admin/dashboard", {
       candidates: [],
-      error: 'Error fetching candidates' 
+      error: "Error fetching candidates",
     });
   }
 });
 
-app.post('/admin/create-candidate', isAdmin, async (req, res) => {
+app.post("/admin/create-candidate", isAdmin, async (req, res) => {
   try {
     const { email, name, position } = req.body;
-    
+
     // Server-side validation
     if (!email || !name) {
-      const candidatesSnapshot = await db.collection('candidates').get();
-      const candidates = candidatesSnapshot.docs.map(doc => ({
+      const candidatesSnapshot = await db.collection("candidates").get();
+      const candidates = candidatesSnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
-      return res.render('admin/dashboard', { 
-        candidates, 
-        error: 'Email and name are required' 
+      return res.render("admin/dashboard", {
+        candidates,
+        error: "Email and name are required",
       });
     }
-    
+
     // Trim and validate inputs
     const trimmedEmail = email.trim();
     const trimmedName = name.trim();
-    const trimmedPosition = position ? position.trim() : 'General Candidate';
-    
+    const trimmedPosition = position ? position.trim() : "General Candidate";
+
     if (!trimmedEmail || !trimmedName) {
-      const candidatesSnapshot = await db.collection('candidates').get();
-      const candidates = candidatesSnapshot.docs.map(doc => ({
+      const candidatesSnapshot = await db.collection("candidates").get();
+      const candidates = candidatesSnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
-      return res.render('admin/dashboard', { 
-        candidates, 
-        error: 'Email and name cannot be empty' 
+      return res.render("admin/dashboard", {
+        candidates,
+        error: "Email and name cannot be empty",
       });
     }
-    
+
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
-      const candidatesSnapshot = await db.collection('candidates').get();
-      const candidates = candidatesSnapshot.docs.map(doc => ({
+      const candidatesSnapshot = await db.collection("candidates").get();
+      const candidates = candidatesSnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
-      return res.render('admin/dashboard', { 
-        candidates, 
-        error: 'Please enter a valid email address' 
+      return res.render("admin/dashboard", {
+        candidates,
+        error: "Please enter a valid email address",
       });
     }
-    
+
     // Check if candidate already exists
-    const existingCandidateQuery = await db.collection('candidates')
-      .where('email', '==', trimmedEmail.toLowerCase())
+    const existingCandidateQuery = await db
+      .collection("candidates")
+      .where("email", "==", trimmedEmail.toLowerCase())
       .get();
-    
+
     if (!existingCandidateQuery.empty) {
-      const candidatesSnapshot = await db.collection('candidates').get();
-      const candidates = candidatesSnapshot.docs.map(doc => ({
+      const candidatesSnapshot = await db.collection("candidates").get();
+      const candidates = candidatesSnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
-      return res.render('admin/dashboard', { 
-        candidates, 
-        error: 'A candidate with this email already exists' 
+      return res.render("admin/dashboard", {
+        candidates,
+        error: "A candidate with this email already exists",
       });
     }
 
     const token = generateUniqueToken();
     const link = `${BASE_URL}/candidate/${token}`; // Use configurable BASE_URL for cross-device/network access
 
-    await db.collection('candidates').doc(token).set({
+    await db.collection("candidates").doc(token).set({
       email: trimmedEmail.toLowerCase(),
       name: trimmedName,
       position: trimmedPosition,
@@ -319,45 +324,46 @@ app.post('/admin/create-candidate', isAdmin, async (req, res) => {
       videoUrls: { writing: null, political: null, aptitude: null }, // Per-module video URLs
       proctoringLogs: { writing: [], political: [], aptitude: [] }, // Per-module logs
       assignedQuestions: selectQuestionsForCandidate(),
-      activity: [`Candidate created for position: ${trimmedPosition} at ${new Date().toISOString()}`],
+      activity: [
+        `Candidate created for position: ${trimmedPosition} at ${new Date().toISOString()}`,
+      ],
       createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Link expires in 7 days
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Link expires in 7 days
     });
-    
+
     console.log(`✅ Assessment link for ${trimmedName} (${trimmedEmail}): ${link}`);
-    
-    const candidatesSnapshot = await db.collection('candidates').get();
-    const candidates = candidatesSnapshot.docs.map(doc => ({
+
+    const candidatesSnapshot = await db.collection("candidates").get();
+    const candidates = candidatesSnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     }));
-    
-    res.render('admin/dashboard', { 
-      candidates, 
-      successMessage: `Candidate "${trimmedName}" created successfully! Assessment link has been generated.` 
+
+    res.render("admin/dashboard", {
+      candidates,
+      successMessage: `Candidate "${trimmedName}" created successfully! Assessment link has been generated.`,
     });
-    
   } catch (error) {
-    console.error('❌ Error creating candidate:', error);
-    
-    const candidatesSnapshot = await db.collection('candidates').get();
-    const candidates = candidatesSnapshot.docs.map(doc => ({
+    console.error("❌ Error creating candidate:", error);
+
+    const candidatesSnapshot = await db.collection("candidates").get();
+    const candidates = candidatesSnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     }));
-    
-    res.render('admin/dashboard', { 
-      candidates, 
-      error: 'Error creating candidate. Please try again.' 
+
+    res.render("admin/dashboard", {
+      candidates,
+      error: "Error creating candidate. Please try again.",
     });
   }
 });
 
 // New: Reset exam endpoint (referenced in candidate-details.ejs)
-app.post('/admin/candidate/:token/reset-exam', isAdmin, async (req, res) => {
+app.post("/admin/candidate/:token/reset-exam", isAdmin, async (req, res) => {
   const { token } = req.params;
   try {
-    await db.collection('candidates').doc(token).update({
+    await db.collection("candidates").doc(token).update({
       verified: false,
       examStarted: false,
       examCompleted: false,
@@ -368,35 +374,40 @@ app.post('/admin/candidate/:token/reset-exam', isAdmin, async (req, res) => {
       proctoringLogs: { writing: [], political: [], aptitude: [] },
       startTime: null,
       completedAt: null,
-      activity: admin.firestore.FieldValue.arrayUnion(`Exam reset by admin at ${new Date().toISOString()}`)
+      activity: admin.firestore.FieldValue.arrayUnion(
+        `Exam reset by admin at ${new Date().toISOString()}`
+      ),
     });
     res.redirect(`/admin/candidate/${token}?success=Exam reset successfully`);
   } catch (error) {
-    console.error('Error resetting exam:', error);
+    console.error("Error resetting exam:", error);
     res.redirect(`/admin/candidate/${token}?error=Error resetting exam`);
   }
 });
 
 // Admin candidate details route
-app.get('/admin/candidate/:token', isAdmin, async (req, res) => {
+app.get("/admin/candidate/:token", isAdmin, async (req, res) => {
   const { token } = req.params;
   try {
-    const doc = await db.collection('candidates').doc(token).get();
+    const doc = await db.collection("candidates").doc(token).get();
     if (!doc.exists) {
-      return res.status(404).render('error', { message: 'Candidate not found' });
+      return res.status(404).render("error", { message: "Candidate not found" });
     }
     const candidate = doc.data();
 
     // Prepare answers display: For MCQs, show selected vs correct; for writing, show text
     const detailedAnswers = {};
-    Object.keys(candidate.assignedQuestions || {}).forEach(mod => {
+    Object.keys(candidate.assignedQuestions || {}).forEach((mod) => {
       const questions = candidate.assignedQuestions[mod] || [];
       const modAnswers = candidate.answers[mod] || {};
-      detailedAnswers[mod] = questions.map(q => ({
+      detailedAnswers[mod] = questions.map((q) => ({
         question: q.question,
-        answer: modAnswers[q.id] || 'No answer',
-        isCorrect: mod !== 'writing' && q.options?.find(opt => opt.isCorrect && opt.text === modAnswers[q.id]),
-        correctAnswer: mod !== 'writing' ? q.options?.find(opt => opt.isCorrect)?.text : null
+        answer: modAnswers[q.id] || "No answer",
+        isCorrect:
+          mod !== "writing" &&
+          q.options?.find((opt) => opt.isCorrect && opt.text === modAnswers[q.id]),
+        correctAnswer:
+          mod !== "writing" ? q.options?.find((opt) => opt.isCorrect)?.text : null,
       }));
     });
 
@@ -405,45 +416,49 @@ app.get('/admin/candidate/:token', isAdmin, async (req, res) => {
     candidate.proctoringLogs = candidate.proctoringLogs || {};
     candidate.videoUrls = candidate.videoUrls || {};
 
-    res.render('admin/candidate-details', { candidate });
+    res.render("admin/candidate-details", { candidate });
   } catch (error) {
-    console.error('Error fetching candidate details:', error);
-    res.status(500).render('error', { message: 'Error loading candidate details' });
+    console.error("Error fetching candidate details:", error);
+    res.status(500).render("error", { message: "Error loading candidate details" });
   }
 });
 
 // Candidate Routes - AUTOMATIC PROCESS (allows retake if not completed or reset)
-app.get('/candidate/:token', async (req, res) => {
+app.get("/candidate/:token", async (req, res) => {
   const { token } = req.params;
   console.log(`🔍 Loading candidate with token: ${token}`);
-  
+
   try {
-    const doc = await db.collection('candidates').doc(token).get();
-    
+    const doc = await db.collection("candidates").doc(token).get();
+
     if (!doc.exists) {
-      console.log('❌ Candidate not found in database');
+      console.log("❌ Candidate not found in database");
       return res.status(404).send(`
         <h1>Assessment Not Found</h1>
         <p>The assessment link is invalid or has expired.</p>
         <p>Please contact the administrator for assistance.</p>
       `);
     }
-    
+
     const candidate = doc.data();
-    console.log(`✅ Candidate found: ${candidate.name} (${candidate.email})`);
-    console.log(`📊 Candidate status: verified=${candidate.verified}, examStarted=${candidate.examStarted}, examCompleted=${candidate.examCompleted}`);
-    
+    console.log(
+      `✅ Candidate found: ${candidate.name} (${candidate.email})`
+    );
+    console.log(
+      `📊 Candidate status: verified=${candidate.verified}, examStarted=${candidate.examStarted}, examCompleted=${candidate.examCompleted}`
+    );
+
     // Check if link expired
     if (candidate.expiresAt && candidate.expiresAt.toDate() < new Date()) {
-      console.log('❌ Assessment link expired');
+      console.log("❌ Assessment link expired");
       return res.status(410).send(`
         <h1>Assessment Link Expired</h1>
         <p>This assessment link has expired. Please contact the administrator for a new link.</p>
       `);
     }
-    
+
     if (candidate.examCompleted) {
-      console.log('📝 Candidate has completed exam');
+      console.log("📝 Candidate has completed exam");
       return res.send(`
         <h1>Assessment Completed</h1>
         <p>Thank you, ${candidate.name}! You have completed the assessment.</p>
@@ -451,42 +466,51 @@ app.get('/candidate/:token', async (req, res) => {
         <p><a href="/admin/login">Admin Login</a> to reset if needed for retake.</p>
         <h2>Your Scores:</h2>
         <ul>
-          <li>Writing: ${candidate.scores.writing}/2</li>
-          <li>Political Awareness: ${candidate.scores.political}/2</li>
-          <li>Analytical Aptitude: ${candidate.scores.aptitude}/2</li>
+          <li>Writing: ${candidate.scores.writing || 0}/2</li>
+          <li>Political Awareness: ${candidate.scores.political || 0}/2</li>
+          <li>Analytical Aptitude: ${candidate.scores.aptitude || 0}/2</li>
         </ul>
       `);
     }
-    
+
     // AUTOMATIC VERIFICATION AND EXAM START (allows retake if not completed)
     if (!candidate.verified) {
-      console.log('🔐 Auto-verifying candidate...');
-      await db.collection('candidates').doc(token).update({ 
-        verified: true,
-        verifiedAt: new Date(),
-        activity: admin.firestore.FieldValue.arrayUnion(`Auto-verified at ${new Date().toISOString()}`)
-      });
-      console.log('✅ Candidate auto-verified');
+      console.log("🔐 Auto-verifying candidate...");
+      await db
+        .collection("candidates")
+        .doc(token)
+        .update({
+          verified: true,
+          verifiedAt: new Date(),
+          activity: admin.firestore.FieldValue.arrayUnion(
+            `Auto-verified at ${new Date().toISOString()}`
+          ),
+        });
+      console.log("✅ Candidate auto-verified");
     }
-    
+
     if (!candidate.examStarted) {
-      console.log('🚀 Auto-starting exam...');
-      await db.collection('candidates').doc(token).update({
-        examStarted: true,
-        startTime: new Date(),
-        currentModule: 'writing',
-        activity: admin.firestore.FieldValue.arrayUnion(`Assessment auto-started at ${new Date().toISOString()}`)
-      });
-      console.log('✅ Exam auto-started');
+      console.log("🚀 Auto-starting exam...");
+      await db
+        .collection("candidates")
+        .doc(token)
+        .update({
+          examStarted: true,
+          startTime: new Date(),
+          currentModule: "writing",
+          activity: admin.firestore.FieldValue.arrayUnion(
+            `Assessment auto-started at ${new Date().toISOString()}`
+          ),
+        });
+      console.log("✅ Exam auto-started");
     }
-    
+
     // Redirect to current module
-    const currentModule = candidate.currentModule || 'writing';
+    const currentModule = candidate.currentModule || "writing";
     console.log(`📚 Redirecting to current module: ${currentModule}`);
     res.redirect(`/candidate/${token}/module/${currentModule}`);
-    
   } catch (error) {
-    console.error('💥 Error loading candidate:', error);
+    console.error("💥 Error loading candidate:", error);
     res.status(500).send(`
       <h1>Error</h1>
       <p>Something went wrong while loading your assessment.</p>
@@ -496,22 +520,22 @@ app.get('/candidate/:token', async (req, res) => {
   }
 });
 
-app.get('/candidate/:token/module/:module', async (req, res) => {
+app.get("/candidate/:token/module/:module", async (req, res) => {
   const { token, module } = req.params;
   console.log(`📖 Loading module: ${module} for token: ${token}`);
-  
+
   try {
-    const doc = await db.collection('candidates').doc(token).get();
+    const doc = await db.collection("candidates").doc(token).get();
     if (!doc.exists) {
-      return res.status(404).send('Invalid assessment link');
+      return res.status(404).send("Invalid assessment link");
     }
-    
+
     const candidate = doc.data();
-    
+
     if (!candidate.verified || !candidate.examStarted) {
       return res.redirect(`/candidate/${token}`);
     }
-    
+
     if (candidate.examCompleted) {
       return res.send(`
         <h1>Assessment Completed</h1>
@@ -520,21 +544,21 @@ app.get('/candidate/:token/module/:module', async (req, res) => {
         <p><a href="/admin/login">Admin Login</a> to reset if needed for retake.</p>
       `);
     }
-    
-    const validModules = ['writing', 'political', 'aptitude'];
+
+    const validModules = ["writing", "political", "aptitude"];
     if (!validModules.includes(module)) {
-      return res.status(404).send('Invalid module');
+      return res.status(404).send("Invalid module");
     }
-    
-    const questions = candidate.assignedQuestions[module];
+
+    const questions = candidate.assignedQuestions[module] || [];
     const currentAnswers = candidate.answers[module] || {};
-    
-    console.log(`📝 Rendering module: ${module} with ${questions ? questions.length : 0} questions`);
-    
+
+    console.log(`📝 Rendering module: ${module} with ${questions.length} questions`);
+
     // Create module name for display
     const moduleName = module.charAt(0).toUpperCase() + module.slice(1);
-    
-    // Enhanced module page with proctoring, camera recording, fullscreen, etc. (scrolling enabled vertically)
+
+    // Enhanced module page with proctoring, camera recording, fullscreen, etc.
     res.send(`
       <!DOCTYPE html>
       <html>
@@ -549,8 +573,8 @@ app.get('/candidate/:token/module/:module', async (req, res) => {
                   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                   min-height: 100vh;
                   color: #333;
-                  overflow-y: auto; /* Allow vertical scrolling for long content */
-                  overflow-x: hidden; /* Prevent horizontal scroll */
+                  overflow-y: auto;
+                  overflow-x: hidden;
               }
               .container {
                   background: white;
@@ -658,7 +682,6 @@ app.get('/candidate/:token/module/:module', async (req, res) => {
                   font-weight: bold;
                   color: #666;
               }
-              /* Hide devtools approximation */
               #devtools-detector { position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; }
           </style>
       </head>
@@ -669,32 +692,55 @@ app.get('/candidate/:token/module/:module', async (req, res) => {
           <div class="container">
               <div class="header">
                   <h1>${moduleName} Module - Proctored</h1>
-                  <p>Candidate: <strong>${candidate.name}</strong> | Email: <strong>${candidate.email}</strong> | Position: ${candidate.position}</p>
+                  <p>Candidate: <strong>${candidate.name || "Unknown"}</strong> | Email: <strong>${
+                    candidate.email || "N/A"
+                  }</strong> | Position: ${candidate.position || "N/A"}</p>
                   <div class="warning">
-                      <strong>⚠️ Proctoring Active:</strong> Camera is recording. Stay in fullscreen. Do not switch tabs or use devtools. Violations will be logged.
+                      <strong>⚠️ Proctoring Active:</strong> Camera is recording if accessible. Stay in fullscreen. Do not switch tabs or use devtools. Violations will be logged if proctoring is active.
                   </div>
                   <video id="videoElement" autoplay muted playsinline></video>
-                  <div class="progress">Module ${['writing', 'political', 'aptitude'].indexOf(module) + 1} of 3</div>
+                  <div class="progress">Module ${["writing", "political", "aptitude"].indexOf(
+                    module
+                  ) + 1} of 3</div>
               </div>
               
               <form id="moduleForm">
-                ${questions ? questions.map((q, index) => `
+                ${
+                  questions.length > 0
+                    ? questions
+                        .map((q, index) => `
                   <div class="question">
                     <h3>Question ${index + 1} of ${questions.length}</h3>
-                    <p>${q.question}</p>
-                    ${module === 'writing' ? 
-                      `<textarea name="answers[${q.id}]" placeholder="Type your detailed answer here..." required>${currentAnswers[q.id] || ''}</textarea>` :
-                      `<div class="options">
-                        ${q.options.map(opt => `
+                    <p>${q.question || "No question available"}</p>
+                    ${
+                      module === "writing"
+                        ? `<textarea name="answers[${
+                            q.id
+                          }]" placeholder="Type your detailed answer here..." required>${
+                            currentAnswers[q.id] || ""
+                          }</textarea>`
+                        : `<div class="options">
+                          ${q.options
+                            .map(
+                              (opt) => `
                           <label>
-                            <input type="radio" name="answers[${q.id}]" value="${opt.text}" ${currentAnswers[q.id] === opt.text ? 'checked' : ''} required>
-                            ${opt.text}
+                            <input type="radio" name="answers[${
+                              q.id
+                            }]" value="${opt.text || ""}" ${
+                                currentAnswers[q.id] === opt.text ? "checked" : ""
+                              } required>
+                            ${opt.text || "No option"}
                           </label>
-                        `).join('')}
-                      </div>`
+                          `
+                            )
+                            .join("")}
+                        </div>`
                     }
                   </div>
-                `).join('') : '<p>No questions available</p>'}
+                `)
+                        .join("")
+                    : '<p>No questions available. Contact support.</p>'
+                }
                 
                 <button type="submit" id="submitBtn">
                   Submit ${moduleName} Module
@@ -703,7 +749,6 @@ app.get('/candidate/:token/module/:module', async (req, res) => {
           </div>
 
           <script>
-            // Proctoring and Exam Features
             const token = '${token}';
             const module = '${module}';
             let mediaRecorder;
@@ -715,14 +760,14 @@ app.get('/candidate/:token/module/:module', async (req, res) => {
             const videoElement = document.getElementById('videoElement');
             const submitBtn = document.getElementById('submitBtn');
 
-            // Enforce Fullscreen
             function enterFullscreen() {
               if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen();
+                document.documentElement.requestFullscreen().catch(() => {
+                  console.log('Fullscreen request failed, proceeding without fullscreen');
+                });
               }
             }
 
-            // Camera and Recording
             async function startRecording() {
               try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -731,15 +776,15 @@ app.get('/candidate/:token/module/:module', async (req, res) => {
                 mediaRecorder.ondataavailable = (event) => {
                   if (event.data.size > 0) recordedChunks.push(event.data);
                 };
-                mediaRecorder.start();
+                mediaRecorder.start(10000); // Record in 10-second chunks
                 console.log('Recording started');
               } catch (err) {
-                alert('Camera access denied. Proctoring cannot proceed.');
-                proctoringLogs.push('Camera access denied: ' + err.message);
+                console.warn('Camera access denied, proctoring disabled:', err.message);
+                proctoringLogs.push(`Camera access denied: ${err.message}`);
+                videoElement.style.display = 'none'; // Hide video element if no access
               }
             }
 
-            // Proctoring Logs Sender (periodically)
             function sendProctoringLog() {
               if (proctoringLogs.length > 0) {
                 fetch('/candidate/' + token + '/log-proctoring', {
@@ -747,12 +792,11 @@ app.get('/candidate/:token/module/:module', async (req, res) => {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ module, logs: proctoringLogs })
                 }).catch(err => console.error('Log send failed:', err));
-                proctoringLogs = []; // Clear after send
+                proctoringLogs = [];
               }
             }
-            setInterval(sendProctoringLog, 30000); // Every 30s
+            setInterval(sendProctoringLog, 30000);
 
-            // Tab Switch Detection
             document.addEventListener('visibilitychange', () => {
               if (document.hidden) {
                 proctoringLogs.push('Tab switched away at ' + new Date().toISOString());
@@ -760,7 +804,6 @@ app.get('/candidate/:token/module/:module', async (req, res) => {
               }
             });
 
-            // Fullscreen Change Detection
             document.addEventListener('fullscreenchange', () => {
               if (!document.fullscreenElement) {
                 proctoringLogs.push('Exited fullscreen at ' + new Date().toISOString());
@@ -769,19 +812,16 @@ app.get('/candidate/:token/module/:module', async (req, res) => {
               }
             });
 
-            // Disable DevTools (key combos)
             document.addEventListener('keydown', (e) => {
               if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.shiftKey && e.key === 'C') || (e.ctrlKey && e.shiftKey && e.key === 'J')) {
                 e.preventDefault();
                 proctoringLogs.push('DevTools attempt blocked at ' + new Date().toISOString());
                 alert('Warning: DevTools are disabled!');
               }
-              // Disable right-click
               if (e.key === 'F5' || e.key === 'F11') e.preventDefault();
             });
             document.addEventListener('contextmenu', e => e.preventDefault());
 
-            // Timer functionality
             function updateTimer() {
               const minutes = Math.floor(timeLeft / 60);
               const seconds = timeLeft % 60;
@@ -800,11 +840,21 @@ app.get('/candidate/:token/module/:module', async (req, res) => {
               submitForm();
             }
 
-            function submitForm() {
-              // Stop recording
+            function submitForm(retryCount = 0) {
+              if (retryCount > 2) {
+                alert('Failed to submit after multiple attempts. Contact support.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit ${moduleName} Module';
+                return;
+              }
+
               if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
-                stream.getTracks().forEach(track => track.stop());
+                try {
+                  mediaRecorder.stop();
+                  stream.getTracks().forEach(track => track.stop());
+                } catch (err) {
+                  console.warn('Error stopping recorder:', err.message);
+                }
               }
 
               const formData = new FormData(document.getElementById('moduleForm'));
@@ -812,20 +862,18 @@ app.get('/candidate/:token/module/:module', async (req, res) => {
               
               for (let [key, value] of formData.entries()) {
                 if (key.startsWith('answers[')) {
-                  const questionId = key.match(/\\[(.*?)\\]/)[1];
-                  answers[questionId] = value;
+                  const questionId = key.match(/\\[(.*?)\\]/)?.[1];
+                  if (questionId) answers[questionId] = value || '';
                 }
               }
 
-              // Create video blob
               const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
               formData.append('video', videoBlob, 'recording.webm');
               formData.append('module', module);
-              formData.append('answers', JSON.stringify(answers));
+              formData.append('answers', JSON.stringify(answers || {}));
               formData.append('timeSpent', 1800 - timeLeft);
-              formData.append('proctoringLogs', JSON.stringify(proctoringLogs));
+              formData.append('proctoringLogs', JSON.stringify(proctoringLogs || []));
 
-              // Show loading state
               submitBtn.disabled = true;
               submitBtn.textContent = 'Submitting...';
               
@@ -842,15 +890,18 @@ app.get('/candidate/:token/module/:module', async (req, res) => {
                     window.location.href = '/candidate/${token}/results';
                   }
                 } else {
-                  alert('Error submitting module: ' + data.message);
+                  alert('Error submitting module: ' + (data.message || 'Unknown error'));
                   submitBtn.disabled = false;
                   submitBtn.textContent = 'Submit ${moduleName} Module';
+                  submitForm(retryCount + 1); // Retry on failure
                 }
               })
               .catch(error => {
-                alert('Error submitting module. Please try again.');
+                console.error('Submission error:', error);
+                alert('Error submitting module. Retrying...');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Submit ${moduleName} Module';
+                submitForm(retryCount + 1); // Retry on network error
               });
             }
             
@@ -859,12 +910,10 @@ app.get('/candidate/:token/module/:module', async (req, res) => {
               submitForm();
             });
             
-            // Start the timer and proctoring
             updateTimer();
             enterFullscreen();
             startRecording();
             
-            // Prevent accidental navigation
             window.addEventListener('beforeunload', function (e) {
               e.preventDefault();
               e.returnValue = '';
@@ -873,47 +922,88 @@ app.get('/candidate/:token/module/:module', async (req, res) => {
       </body>
       </html>
     `);
-    
   } catch (error) {
-    console.error('Error loading module:', error);
-    res.status(500).send('Error loading assessment module');
+    console.error("Error loading module:", error);
+    res.status(500).send(`
+      <h1>Error</h1>
+      <p>Something went wrong while loading your assessment module.</p>
+      <p>Please try refreshing or contact support.</p>
+      <p>Error: ${error.message}</p>
+      <script>
+        setTimeout(() => location.reload(), 5000); // Auto-reload after 5 seconds
+      </script>
+    `);
   }
 });
 
 // Endpoint to log proctoring events
-app.post('/candidate/:token/log-proctoring', async (req, res) => {
+app.post("/candidate/:token/log-proctoring", async (req, res) => {
   const { token } = req.params;
-  const { module, logs } = req.body;
+  const { module, logs } = req.body || {};
   try {
-    await db.collection('candidates').doc(token).update({
-      [`proctoringLogs.${module}`]: admin.firestore.FieldValue.arrayUnion(...logs)
-    });
+    if (module && Array.isArray(logs)) {
+      await db
+        .collection("candidates")
+        .doc(token)
+        .update({
+          [`proctoringLogs.${module}`]: admin.firestore.FieldValue.arrayUnion(...logs),
+        });
+    }
     res.json({ success: true });
   } catch (error) {
-    console.error('Error logging proctoring:', error);
+    console.error("Error logging proctoring:", error);
     res.status(500).json({ success: false });
   }
 });
 
-app.post('/candidate/:token/submit-module', upload.single('video'), async (req, res) => {
+app.post("/candidate/:token/submit-module", upload.single("video"), async (req, res) => {
   const { token } = req.params;
-  const { module } = req.body;
-  let answers, timeSpent, proctoringLogsStr;
+  const { module } = req.body || {};
+  let answers = {};
+  let timeSpent = 0;
+  let proctoringLogsStr = [];
+
+  // Log raw request body for debugging
+  console.log(`📥 Received submit-module request for ${token}:`, req.body);
 
   try {
-    answers = JSON.parse(req.body.answers || '{}');
-    timeSpent = parseInt(req.body.timeSpent) || 0;
-    proctoringLogsStr = JSON.parse(req.body.proctoringLogs || '[]');
+    // Safely parse answers
+    if (typeof req.body.answers === "string") {
+      try {
+        answers = JSON.parse(req.body.answers || "{}");
+      } catch (e) {
+        console.warn("Invalid answers JSON, using empty object:", e.message);
+        answers = {};
+      }
+    }
+
+    // Safely parse timeSpent
+    timeSpent = typeof req.body.timeSpent === "string" ? parseInt(req.body.timeSpent) || 0 : 0;
+
+    // Safely parse proctoringLogs
+    if (typeof req.body.proctoringLogs === "string") {
+      try {
+        proctoringLogsStr = JSON.parse(req.body.proctoringLogs || "[]");
+      } catch (e) {
+        console.warn("Invalid proctoringLogs JSON, using empty array:", e.message);
+        proctoringLogsStr = [];
+      }
+    }
+
+    if (!module) {
+      throw new Error("Module not specified");
+    }
   } catch (e) {
-    return res.status(400).json({ success: false, message: 'Invalid data' });
+    console.error("❌ Parsing error:", e.message);
+    return res.status(400).json({ success: false, message: `Invalid data: ${e.message}` });
   }
 
   console.log(`📤 Submitting module: ${module} for token: ${token}`);
 
   try {
-    const doc = await db.collection('candidates').doc(token).get();
+    const doc = await db.collection("candidates").doc(token).get();
     if (!doc.exists) {
-      return res.status(404).json({ success: false, message: 'Candidate not found' });
+      return res.status(404).json({ success: false, message: "Candidate not found" });
     }
 
     const candidate = doc.data();
@@ -923,13 +1013,13 @@ app.post('/candidate/:token/submit-module', upload.single('video'), async (req, 
     let score = null;
     let maxScore = null;
 
-    if (module === 'political' || module === 'aptitude') {
+    if (module === "political" || module === "aptitude") {
       score = 0;
       maxScore = assignedQuestions.length;
 
-      assignedQuestions.forEach(q => {
+      assignedQuestions.forEach((q) => {
         const givenAnswer = answers[q.id];
-        const correctOption = q.options?.find(opt => opt.isCorrect);
+        const correctOption = q.options?.find((opt) => opt.isCorrect);
         if (givenAnswer && correctOption && givenAnswer === correctOption.text) {
           score++;
         }
@@ -937,71 +1027,91 @@ app.post('/candidate/:token/submit-module', upload.single('video'), async (req, 
     }
 
     // ---- Step 2: Upload video (if present) ----
-    let videoUrl = null;
+    let videoUrl = candidate.videoUrls[module] || null;
     if (req.file) {
-      const fileName = `recordings/${token}/${module}-${Date.now()}.webm`;
-      const file = bucket.file(fileName);
+      try {
+        const fileName = `recordings/${token}/${module}-${Date.now()}.webm`;
+        const file = bucket.file(fileName);
 
-      await file.save(req.file.buffer, {
-        contentType: req.file.mimetype,
-        metadata: { firebaseStorageDownloadTokens: token }
-      });
+        await file.save(req.file.buffer, {
+          contentType: req.file.mimetype,
+          metadata: { firebaseStorageDownloadTokens: token },
+        });
 
-      videoUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(fileName)}?alt=media&token=${token}`;
+        videoUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(
+          fileName
+        )}?alt=media&token=${token}`;
+      } catch (error) {
+        console.warn("Video upload failed, proceeding without video:", error.message);
+        videoUrl = null; // Fallback to existing URL if upload fails
+      }
     }
 
     // ---- Step 3: Update candidate record ----
-    await db.collection('candidates').doc(token).update({
-      [`answers.${module}`]: answers,
-      [`scores.${module}`]: score !== null ? score : null,
-      [`videoUrls.${module}`]: videoUrl,
-      [`proctoringLogs.${module}`]: admin.firestore.FieldValue.arrayUnion(...proctoringLogsStr),
-      currentModule: module,
-      activity: admin.firestore.FieldValue.arrayUnion(
-        `Module ${module} submitted at ${new Date().toISOString()} (timeSpent=${timeSpent}s, score=${score ?? 'N/A'})`
-      )
-    });
+    await db
+      .collection("candidates")
+      .doc(token)
+      .update({
+        [`answers.${module}`]: answers,
+        [`scores.${module}`]: score !== null ? score : null,
+        [`videoUrls.${module}`]: videoUrl,
+        [`proctoringLogs.${module}`]: admin.firestore.FieldValue.arrayUnion(...proctoringLogsStr),
+        currentModule: module,
+        activity: admin.firestore.FieldValue.arrayUnion(
+          `Module ${module} submitted at ${new Date().toISOString()} (timeSpent=${timeSpent}s, score=${
+            score ?? "N/A"
+          })`
+        ),
+      });
 
     // ---- Step 4: Decide next module ----
-    const moduleOrder = ['writing', 'political', 'aptitude'];
+    const moduleOrder = ["writing", "political", "aptitude"];
     const currentIndex = moduleOrder.indexOf(module);
 
     let nextModule = null;
     if (currentIndex >= 0 && currentIndex < moduleOrder.length - 1) {
       nextModule = moduleOrder[currentIndex + 1];
-      await db.collection('candidates').doc(token).update({ currentModule: nextModule });
+      await db.collection("candidates").doc(token).update({ currentModule: nextModule });
     } else {
       // Last module completed
-      await db.collection('candidates').doc(token).update({
-        examCompleted: true,
-        completedAt: new Date(),
-        activity: admin.firestore.FieldValue.arrayUnion(`Assessment completed at ${new Date().toISOString()}`)
-      });
+      await db
+        .collection("candidates")
+        .doc(token)
+        .update({
+          examCompleted: true,
+          completedAt: new Date(),
+          activity: admin.firestore.FieldValue.arrayUnion(
+            `Assessment completed at ${new Date().toISOString()}`
+          ),
+        });
     }
 
     res.json({ success: true, nextModule });
   } catch (error) {
-    console.error('❌ Error submitting module:', error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("❌ Error submitting module:", error);
+    res.status(500).json({ success: false, message: "Server error, please retry or contact support" });
   }
 });
 
-app.get('/candidate/:token/results', async (req, res) => {
+app.get("/candidate/:token/results", async (req, res) => {
   const { token } = req.params;
   try {
-    const doc = await db.collection('candidates').doc(token).get();
+    const doc = await db.collection("candidates").doc(token).get();
     if (!doc.exists) {
-      return res.status(404).send('Candidate not found');
+      return res.status(404).send("Candidate not found");
     }
-    
+
     const candidate = doc.data();
     if (!candidate.examCompleted) {
-      return res.status(400).send('Assessment not completed yet');
+      return res.status(400).send("Assessment not completed yet");
     }
-    
-    const totalScore = Object.values(candidate.scores || {}).reduce((sum, score) => sum + (score || 0), 0);
+
+    const totalScore = Object.values(candidate.scores || {}).reduce(
+      (sum, score) => sum + (score || 0),
+      0
+    );
     const maxTotalScore = 6; // 2 writing + 2 political + 2 aptitude
-    
+
     res.send(`
       <!DOCTYPE html>
       <html>
@@ -1036,15 +1146,15 @@ app.get('/candidate/:token/results', async (req, res) => {
       <body>
           <div class="container">
               <h1 class="success">Assessment Completed! 🎉</h1>
-              <p>Congratulations <strong>${candidate.name}</strong>!</p>
+              <p>Congratulations <strong>${candidate.name || "Unknown"}</strong>!</p>
               <p>You have successfully completed the assessment.</p>
               
               <div class="scores">
                   <h2>Your Scores:</h2>
                   <ul>
-                      <li>📝 Writing: ${candidate.scores.writing}/2</li>
-                      <li>🏛️ Political Awareness: ${candidate.scores.political}/2</li>
-                      <li>🔢 Analytical Aptitude: ${candidate.scores.aptitude}/2</li>
+                      <li>📝 Writing: ${candidate.scores.writing || 0}/2</li>
+                      <li>🏛️ Political Awareness: ${candidate.scores.political || 0}/2</li>
+                      <li>🔢 Analytical Aptitude: ${candidate.scores.aptitude || 0}/2</li>
                   </ul>
                   
                   <h3>Total Score: ${totalScore}/${maxTotalScore}</h3>
@@ -1058,8 +1168,13 @@ app.get('/candidate/:token/results', async (req, res) => {
       </html>
     `);
   } catch (error) {
-    console.error('Error fetching results:', error);
-    res.status(500).send('Error fetching results');
+    console.error("Error fetching results:", error);
+    res.status(500).send(`
+      <h1>Error</h1>
+      <p>Something went wrong while fetching your results.</p>
+      <p>Please contact support.</p>
+      <p>Error: ${error.message}</p>
+    `);
   }
 });
 
@@ -1078,7 +1193,7 @@ app.get("/", (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
+  console.error("Unhandled error:", err);
   res.status(500).send(`
     <h1>Something went wrong!</h1>
     <p>Please try again later.</p>
