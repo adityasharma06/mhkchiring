@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= moduleName %> - Assessment</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .timer {
+            background: #dc3545;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .question {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+        }
+        .question-number {
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .options {
+            margin-top: 15px;
+        }
+        .option {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .option:hover {
+            background: #f8f9fa;
+        }
+        .option.selected {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            resize: vertical;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #218838;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2><%= moduleName %></h2>
+        <div class="timer" id="timer">30:00</div>
+    </div>
+
+    <div class="container">
+        <form id="assessmentForm">
+            <% if (module === 'writing') { %>
+                <% questions.forEach((question, index) => { %>
+                    <div class="question">
+                        <div class="question-number">Question <%= index + 1 %>:</div>
+                        <div><%= question.question %></div>
+                        <textarea 
+                            name="answers[<%= question.id %>]" 
+                            placeholder="Type your answer here..."
+                            <%= currentAnswers[question.id] ? '' : 'required' %>
+                        ><%= currentAnswers[question.id] || '' %></textarea>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <% questions.forEach((question, index) => { %>
+                    <div class="question">
+                        <div class="question-number">Question <%= index + 1 %>:</div>
+                        <div><%= question.question %></div>
+                        <div class="options">
+                            <% question.options.forEach((option, optIndex) => { %>
+                                <div class="option <%= currentAnswers[question.id] === option.text ? 'selected' : '' %>" 
+                                     data-question="<%= question.id %>" 
+                                     data-option="<%= option.text %>">
+                                    <%= String.fromCharCode(65 + optIndex) %>. <%= option.text %>
+                                </div>
+                            <% }); %>
+                        </div>
+                        <input type="hidden" name="answers[<%= question.id %>]" 
+                               value="<%= currentAnswers[question.id] || '' %>">
+                    </div>
+                <% }); %>
+            <% } %>
+            
+            <button type="submit" id="submitBtn">Submit <%= moduleName %></button>
+        </form>
+    </div>
+
+    <script>
+        // Timer functionality
+        let timeLeft = <%= timeLimit %>;
+        const timerElement = document.getElementById('timer');
+        
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft <= 0) {
+                submitForm();
+            } else {
+                timeLeft--;
+            }
+        }
+        
+        setInterval(updateTimer, 1000);
+        
+        // Handle option selection for MCQs
+        if (document.querySelector('.option')) {
+            document.querySelectorAll('.option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const questionId = this.getAttribute('data-question');
+                    const optionText = this.getAttribute('data-option');
+                    
+                    // Remove selected class from all options in this question
+                    this.parentElement.querySelectorAll('.option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked option
+                    this.classList.add('selected');
+                    
+                    // Update hidden input
+                    const hiddenInput = this.closest('.question').querySelector('input[type="hidden"]');
+                    hiddenInput.value = optionText;
+                });
+            });
+        }
+        
+        // Form submission
+        document.getElementById('assessmentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitForm();
+        });
+        
+        function submitForm() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            const formData = new FormData(this);
+            const answers = {};
+            
+            // Collect all answers
+            formData.forEach((value, key) => {
+                if (key.startsWith('answers[')) {
+                    const questionId = key.match(/\[(.*?)\]/)[1];
+                    answers[questionId] = value;
+                }
+            });
+            
+            const timeSpent = <%= timeLimit %> - timeLeft;
+            
+            fetch('/candidate/<%= candidate.token %>/submit-module', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    module: '<%= module %>',
+                    answers: answers,
+                    timeSpent: timeSpent
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.nextModule) {
+                        window.location.href = '/candidate/<%= candidate.token %>/module/' + data.nextModule;
+                    } else {
+                        window.location.href = '/candidate/<%= candidate.token %>/results';
+                    }
+                } else {
+                    alert('Error submitting module: ' + data.message);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit <%= moduleName %>';
+                }
+            })
+            .catch(error => {
+                alert('Error submitting module. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit <%= moduleName %>';
+            });
+        }
+        
+        // Auto-save progress every 30 seconds
+        setInterval(() => {
+            const form = document.getElementById('assessmentForm');
+            const formData = new FormData(form);
+            const answers = {};
+            
+            formData.forEach((value, key) => {
+                if (key.startsWith('answers[')) {
+                    const questionId = key.match(/\[(.*?)\]/)[1];
+                    answers[questionId] = value;
+                }
+            });
+            
+            // Save to localStorage as backup
+            localStorage.setItem('<%= candidate.token %>_<%= module %>_answers', JSON.stringify(answers));
+        }, 30000);
+        
+        // Load saved answers from localStorage
+        window.addEventListener('load', () => {
+            const savedAnswers = localStorage.getItem('<%= candidate.token %>_<%= module %>_answers');
+            if (savedAnswers) {
+                const answers = JSON.parse(savedAnswers);
+                Object.keys(answers).forEach(questionId => {
+                    const input = document.querySelector(`[name="answers[${questionId}]"]`);
+                    if (input) {
+                        input.value = answers[questionId];
+                        if (input.type === 'hidden') {
+                            // For MCQs, also update the visual selection
+                            const selectedOption = document.querySelector(`[data-question="${questionId}"][data-option="${answers[questionId]}"]`);
+                            if (selectedOption) {
+                                selectedOption.classList.add('selected');
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

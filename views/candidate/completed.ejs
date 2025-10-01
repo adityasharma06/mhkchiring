@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Completed</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 600px; 
+            margin: 100px auto; 
+            padding: 20px;
+            text-align: center;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .success-icon {
+            font-size: 64px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        .info {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✅</div>
+        <h1>Assessment Completed!</h1>
+        
+        <div class="info">
+            <p><strong>Candidate:</strong> <%= candidate.name %></p>
+            <p><strong>Email:</strong> <%= candidate.email %></p>
+            <% if (candidate.position) { %>
+                <p><strong>Position:</strong> <%= candidate.position %></p>
+            <% } %>
+            <p><strong>Completed At:</strong> <%= candidate.completedAt ? new Date(candidate.completedAt.seconds * 1000).toLocaleString() : 'Just now' %></p>
+        </div>
+        
+        <p>Thank you for completing the assessment. Your responses have been recorded successfully.</p>
+        <p>You will be contacted soon with the results.</p>
+        
+        <p><em>You may safely close this window.</em></p>
+    </div>
+</body>
+</html>

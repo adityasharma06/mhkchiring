@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Instructions</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            color: #333;
+            font-size: 32px;
+        }
+        .candidate-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .instructions {
+            margin-bottom: 30px;
+        }
+        .instructions h2 {
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .instruction-item {
+            margin-bottom: 15px;
+            padding-left: 20px;
+            position: relative;
+        }
+        .instruction-item:before {
+            content: "•";
+            color: #667eea;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        .module-info {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .module-item {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #d1e7ff;
+        }
+        .start-btn {
+            background: #28a745;
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: block;
+            margin: 0 auto;
+        }
+        .start-btn:hover {
+            background: #218838;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>Professional Assessment</h1>
+        </div>
+
+        <div class="candidate-info">
+            <h3>Welcome, <%= candidate.name %>!</h3>
+            <p>Position: <%= candidate.position %></p>
+        </div>
+
+        <div class="instructions">
+            <h2>Assessment Instructions</h2>
+            
+            <div class="warning">
+                <strong>Important:</strong> Once you start the assessment, you cannot pause or restart it. 
+                Please ensure you have a stable internet connection and won't be interrupted.
+            </div>
+
+            <div class="instruction-item">This assessment consists of <strong>3 modules</strong></div>
+            <div class="instruction-item">Total estimated time: <strong>60-75 minutes</strong></div>
+            <div class="instruction-item">You must complete all modules in one sitting</div>
+            <div class="instruction-item">Do not refresh the page or use the browser back button</div>
+            <div class="instruction-item">Ensure you have a quiet environment without distractions</div>
+        </div>
+
+        <div class="module-info">
+            <h3>Assessment Modules</h3>
+            <div class="module-item">
+                <span><strong>1. Written Communication</strong></span>
+                <span>2 questions | 30 minutes</span>
+            </div>
+            <div class="module-item">
+                <span><strong>2. Political Awareness</strong></span>
+                <span>20 questions | 20 minutes</span>
+            </div>
+            <div class="module-item">
+                <span><strong>3. Analytical Aptitude</strong></span>
+                <span>20 questions | 25 minutes</span>
+            </div>
+        </div>
+
+        <button id="startBtn" class="start-btn">Start Assessment</button>
+    </div>
+
+    <script>
+        document.getElementById('startBtn').addEventListener('click', function() {
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Starting...';
+            
+            fetch('/candidate/<%= candidate.token %>/start-exam', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/candidate/<%= candidate.token %>/module/writing';
+                } else {
+                    alert('Error starting assessment: ' + data.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Start Assessment';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error starting assessment. Please try again.');
+                btn.disabled = false;
+                btn.textContent = 'Start Assessment';
+            });
+        });
+    </script>
+</body>
+</html>

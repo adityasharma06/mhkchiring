@@ -1,0 +1,22 @@
+{
+  "name": "my-firebase-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "firebase": "^12.3.0",
+    "firebase-admin": "^13.5.0",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.6"
+  }
+}

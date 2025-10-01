@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidate Details - Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .breadcrumb {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-back {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-back:hover {
+            background: #5a6268;
+        }
+
+        .btn-reset {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-reset:hover {
+            background: #e0a800;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .candidate-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .info-item {
+            margin-bottom: 15px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #555;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #333;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-not-started {
+            background: #6c757d;
+            color: white;
+        }
+
+        .status-in-progress {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .status-completed {
+            background: #28a745;
+            color: white;
+        }
+
+        .assessment-link {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            border: 2px dashed #007bff;
+            word-break: break-all;
+            margin: 15px 0;
+        }
+
+        .assessment-link a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .assessment-link a:hover {
+            text-decoration: underline;
+        }
+
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .score-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .score-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .score-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .score-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .score-max {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .activity-log {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            padding: 12px;
+            border-left: 3px solid #667eea;
+            background: #f8f9fa;
+            margin-bottom: 10px;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .activity-time {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .activity-message {
+            color: #333;
+        }
+
+        .answers-section {
+            margin-top: 20px;
+        }
+
+        .module-answers {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .module-answers h4 {
+            color: #333;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .answer-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #007bff;
+        }
+
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .answer-text {
+            color: #666;
+            padding-left: 15px;
+            margin-bottom: 5px;
+        }
+
+        .correct-indicator {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .correct {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .incorrect {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .no-answers {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .actions-section {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Proctoring Section Styles */
+        .proctoring-section {
+            margin-top: 20px;
+        }
+
+        .proctoring-module {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .proctoring-module h4 {
+            color: #333;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .video-player {
+            width: 100%;
+            max-width: 400px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .log-item {
+            padding: 8px;
+            background: white;
+            margin-bottom: 5px;
+            border-radius: 3px;
+            border-left: 3px solid #dc3545;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .no-logs {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+            padding: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .candidate-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .scores-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>Candidate Details</h1>
+                <div class="breadcrumb">
+                    <a href="/admin/dashboard" style="color: #666; text-decoration: none;">Dashboard</a> 
+                    &gt; Candidate: <%= candidate.name %>
+                </div>
+            </div>
+            <a href="/admin/dashboard" class="btn btn-back">← Back to Dashboard</a>
+        </div>
+
+        <div class="dashboard-content">
+            <!-- Candidate Information -->
+            <div class="card">
+                <h2>Candidate Information</h2>
+                <div class="candidate-info">
+                    <div class="info-item">
+                        <span class="info-label">Full Name</span>
+                        <div class="info-value"><%= candidate.name %></div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Email Address</span>
+                        <div class="info-value"><%= candidate.email %></div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Position</span>
+                        <div class="info-value"><%= candidate.position %></div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Assessment Status</span>
+                        <div class="info-value">
+                            <span class="status-badge <%= candidate.examCompleted ? 'status-completed' : (candidate.examStarted ? 'status-in-progress' : 'status-not-started') %>">
+                                <%= candidate.examCompleted ? 'Completed' : (candidate.examStarted ? 'In Progress' : 'Not Started') %>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Created At</span>
+                        <div class="info-value">
+                            <%= candidate.createdAt ? new Date(candidate.createdAt.toDate()).toLocaleString() : 'N/A' %>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Link Expires</span>
+                        <div class="info-value">
+                            <%= candidate.expiresAt ? new Date(candidate.expiresAt.toDate()).toLocaleString() : 'N/A' %>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="assessment-link">
+                    <strong>Assessment Link:</strong><br>
+                    <a href="<%= candidate.link %>" target="_blank"><%= candidate.link %></a>
+                </div>
+
+                <div class="actions-section">
+                    <form action="/admin/candidate/<%= candidate.token %>/reset-exam" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-reset" onclick="return confirm('Are you sure you want to reset this candidate\'s exam? This will clear all their progress and scores.')">
+                            🔄 Reset Exam
+                        </button>
+                    </form>
+                    
+                    <% if (candidate.examCompleted) { %>
+                        <a href="<%= candidate.link %>" target="_blank" class="btn" style="background: #17a2b8; color: white;">
+                            📊 View Results
+                        </a>
+                    <% } else { %>
+                        <a href="<%= candidate.link %>" target="_blank" class="btn" style="background: #28a745; color: white;">
+                            👁️ View Assessment
+                        </a>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Assessment Scores -->
+            <div class="card">
+                <h2>Assessment Scores</h2>
+                
+                <% if (candidate.examCompleted || candidate.examStarted) { %>
+                    <div class="scores-grid">
+                        <div class="score-card">
+                            <h3>Writing</h3>
+                            <div class="score-value">
+                                <%= candidate.scores.writing !== null ? candidate.scores.writing : 'N/A' %>
+                            </div>
+                            <div class="score-max">/ 2</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: <%= ((candidate.scores.writing || 0) / 2) * 100 %>%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="score-card">
+                            <h3>Political</h3>
+                            <div class="score-value">
+                                <%= candidate.scores.political !== null ? candidate.scores.political : 'N/A' %>
+                            </div>
+                            <div class="score-max">/ 2</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: <%= ((candidate.scores.political || 0) / 2) * 100 %>%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="score-card">
+                            <h3>Aptitude</h3>
+                            <div class="score-value">
+                                <%= candidate.scores.aptitude !== null ? candidate.scores.aptitude : 'N/A' %>
+                            </div>
+                            <div class="score-max">/ 2</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: <%= ((candidate.scores.aptitude || 0) / 2) * 100 %>%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <% 
+                        const totalScore = (candidate.scores.writing || 0) + (candidate.scores.political || 0) + (candidate.scores.aptitude || 0);
+                        const maxScore = 6;
+                        const percentage = (totalScore / maxScore) * 100;
+                    %>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value"><%= totalScore %></div>
+                            <div class="stat-label">Total Score</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value"><%= percentage.toFixed(1) %>%</div>
+                            <div class="stat-label">Overall Score</div>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <p style="text-align: center; color: #666; padding: 40px 20px;">
+                        Assessment not started yet. Candidate has not begun the exam.
+                    </p>
+                <% } %>
+            </div>
+
+            <!-- Current Progress -->
+            <div class="card">
+                <h2>Current Progress</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">
+                            <%= candidate.verified ? '✅' : '❌' %>
+                        </div>
+                        <div class="stat-label">Verified</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">
+                            <%= candidate.examStarted ? '✅' : '❌' %>
+                        </div>
+                        <div class="stat-label">Exam Started</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">
+                            <%= candidate.examCompleted ? '✅' : '❌' %>
+                        </div>
+                        <div class="stat-label">Exam Completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">
+                            <% if (candidate.currentModule) { %>
+                                <%= candidate.currentModule.charAt(0).toUpperCase() + candidate.currentModule.slice(1) %>
+                            <% } else { %>
+                                N/A
+                            <% } %>
+                        </div>
+                        <div class="stat-label">Current Module</div>
+                    </div>
+                </div>
+
+                <% if (candidate.startTime) { %>
+                    <div class="info-item" style="margin-top: 15px;">
+                        <span class="info-label">Start Time</span>
+                        <div class="info-value">
+                            <%= new Date(candidate.startTime.toDate()).toLocaleString() %>
+                        </div>
+                    </div>
+                <% } %>
+
+                <% if (candidate.completedAt) { %>
+                    <div class="info-item">
+                        <span class="info-label">Completed At</span>
+                        <div class="info-value">
+                            <%= new Date(candidate.completedAt.toDate()).toLocaleString() %>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="card">
+                <h2>Activity Log</h2>
+                <div class="activity-log">
+                    <% if (candidate.activity && candidate.activity.length > 0) { %>
+                        <% candidate.activity.slice().reverse().forEach(activity => { %>
+                            <div class="activity-item">
+                                <div class="activity-message"><%= activity %></div>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <p style="text-align: center; color: #666; padding: 20px;">
+                            No activity recorded yet.
+                        </p>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Candidate Answers -->
+            <div class="card">
+                <h2>Candidate Answers</h2>
+                <div class="answers-section">
+                    <% if (candidate.detailedAnswers && Object.keys(candidate.detailedAnswers).length > 0) { %>
+                        <% ['writing', 'political', 'aptitude'].forEach(mod => { %>
+                            <% if (candidate.detailedAnswers[mod] && candidate.detailedAnswers[mod].length > 0) { %>
+                                <div class="module-answers">
+                                    <h4><%= mod.charAt(0).toUpperCase() + mod.slice(1) %> Module</h4>
+                                    <% candidate.detailedAnswers[mod].forEach((item, index) => { %>
+                                        <div class="answer-item">
+                                            <div class="question-text">Question <%= index + 1 %>: <%= item.question %></div>
+                                            <% if (mod === 'writing') { %>
+                                                <div class="answer-text"><%= item.answer %></div>
+                                            <% } else { %>
+                                                <div class="answer-text">Selected: <%= item.answer %></div>
+                                                <% if (item.isCorrect) { %>
+                                                    <span class="correct-indicator correct">✅ Correct</span>
+                                                <% } else { %>
+                                                    <span class="correct-indicator incorrect">❌ Incorrect</span>
+                                                <% } %>
+                                            <% } %>
+                                        </div>
+                                    <% }) %>
+                                </div>
+                            <% } %>
+                        <% }) %>
+                    <% } else { %>
+                        <p class="no-answers">No answers submitted yet</p>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Proctoring & Recordings -->
+            <div class="card">
+                <h2>Proctoring & Recordings</h2>
+                <div class="proctoring-section">
+                    <% ['writing', 'political', 'aptitude'].forEach(mod => { %>
+                        <% if ((candidate.videoUrls && candidate.videoUrls[mod]) || (candidate.proctoringLogs && candidate.proctoringLogs[mod] && candidate.proctoringLogs[mod].length > 0)) { %>
+                            <div class="proctoring-module">
+                                <h4><%= mod.charAt(0).toUpperCase() + mod.slice(1) %> Module</h4>
+                                
+                                <% if (candidate.videoUrls && candidate.videoUrls[mod]) { %>
+                                    <div style="margin-bottom: 15px;">
+                                        <strong>📹 Video Recording:</strong><br>
+                                        <video class="video-player" controls>
+                                            <source src="<%= candidate.videoUrls[mod] %>" type="video/webm">
+                                            Your browser does not support the video tag.
+                                        </video>
+                                    </div>
+                                <% } else { %>
+                                    <p style="color: #666; font-style: italic;">No video recording available.</p>
+                                <% } %>
+
+                                <% if (candidate.proctoringLogs && candidate.proctoringLogs[mod] && candidate.proctoringLogs[mod].length > 0) { %>
+                                    <div>
+                                        <strong>⚠️ Proctoring Logs (Violations):</strong>
+                                        <div style="max-height: 200px; overflow-y: auto; margin-top: 10px;">
+                                            <% candidate.proctoringLogs[mod].forEach(log => { %>
+                                                <div class="log-item"><%= log %></div>
+                                            <% }) %>
+                                        </div>
+                                    </div>
+                                <% } else { %>
+                                    <p class="no-logs">No proctoring violations logged.</p>
+                                <% } %>
+                            </div>
+                        <% } %>
+                    <% }) %>
+
+                    <% if (!['writing', 'political', 'aptitude'].some(mod => (candidate.videoUrls && candidate.videoUrls[mod]) || (candidate.proctoringLogs && candidate.proctoringLogs[mod] && candidate.proctoringLogs[mod].length > 0))) { %>
+                        <p class="no-answers">No proctoring data or recordings available yet.</p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh the page every 30 seconds if exam is in progress
+        <% if (candidate.examStarted && !candidate.examCompleted) { %>
+            setTimeout(() => {
+                window.location.reload();
+            }, 30000);
+        <% } %>
+    </script>
+</body>
+</html>

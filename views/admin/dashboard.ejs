@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .create-candidate-form {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .create-candidate-form h2 {
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group input.error {
+            border-color: #dc3545;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .submit-btn {
+            background: #28a745;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: #218838;
+        }
+
+        .submit-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .candidates-list {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .candidates-list h2 {
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .candidate-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .candidate-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .candidate-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .candidate-email {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .candidate-position {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .candidate-link {
+            word-break: break-all;
+            font-size: 12px;
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+
+        .candidate-status {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        .status-completed {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-started {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .status-not-started {
+            background: #6c757d;
+            color: white;
+        }
+
+        .candidate-actions {
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .btn-view {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-reset {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 40px 20px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Admin Dashboard</h1>
+            <p>Manage candidate assessments and track progress</p>
+            <a href="/admin/logout" class="logout-btn">Logout</a>
+        </div>
+
+        <% if (locals.successMessage) { %>
+            <div class="success-message">
+                <%= successMessage %>
+            </div>
+        <% } %>
+
+        <div class="dashboard-content">
+            <!-- Create Candidate Form -->
+            <div class="create-candidate-form">
+                <h2>Create New Candidate</h2>
+                <form id="createCandidateForm" action="/admin/create-candidate" method="POST">
+                    <div class="form-group">
+                        <label for="name">Full Name *</label>
+                        <input 
+                            type="text" 
+                            id="name" 
+                            name="name" 
+                            required
+                            placeholder="Enter candidate's full name"
+                        >
+                        <span class="error-message" id="nameError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            required
+                            placeholder="Enter candidate's email address"
+                        >
+                        <span class="error-message" id="emailError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="position">Position</label>
+                        <select id="position" name="position">
+                            <option value="Software Engineer">Software Engineer</option>
+                            <option value="Product Manager">Product Manager</option>
+                            <option value="Data Scientist">Data Scientist</option>
+                            <option value="Business Analyst">Business Analyst</option>
+                            <option value="Marketing Specialist">Marketing Specialist</option>
+                            <option value="General Candidate">General Candidate</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        Create Candidate Assessment
+                    </button>
+                </form>
+            </div>
+
+            <!-- Candidates List -->
+            <div class="candidates-list">
+                <h2>Candidates (<%= candidates.length %>)</h2>
+                
+                <% if (candidates.length === 0) { %>
+                    <div class="empty-state">
+                        <p>No candidates created yet.</p>
+                        <p>Create your first candidate using the form on the left.</p>
+                    </div>
+                <% } else { %>
+                    <% candidates.forEach(candidate => { %>
+                        <div class="candidate-item">
+                            <div class="candidate-header">
+                                <div>
+                                    <div class="candidate-name"><%= candidate.name %></div>
+                                    <div class="candidate-email"><%= candidate.email %></div>
+                                </div>
+                                <div class="candidate-position"><%= candidate.position %></div>
+                            </div>
+                            
+                            <div class="candidate-link">
+                                <strong>Assessment Link:</strong> 
+                                <a href="<%= candidate.link %>" target="_blank"><%= candidate.link %></a>
+                            </div>
+                            
+                            <div>
+                                <span class="candidate-status <%= candidate.examCompleted ? 'status-completed' : (candidate.examStarted ? 'status-started' : 'status-not-started') %>">
+                                    <%= candidate.examCompleted ? 'Completed' : (candidate.examStarted ? 'In Progress' : 'Not Started') %>
+                                </span>
+                            </div>
+
+                            <div class="candidate-actions">
+                                <a href="/admin/candidate/<%= candidate.token %>" class="btn btn-view">View Details</a>
+                                <form action="/admin/candidate/<%= candidate.token %>/reset-exam" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-reset" onclick="return confirm('Are you sure you want to reset this candidate\\'s exam?')">Reset Exam</button>
+                                </form>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('createCandidateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const nameError = document.getElementById('nameError');
+            const emailError = document.getElementById('emailError');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // Reset errors
+            nameError.textContent = '';
+            emailError.textContent = '';
+            
+            let isValid = true;
+            
+            // Validate name
+            if (!name) {
+                nameError.textContent = 'Name is required';
+                isValid = false;
+            } else if (name.length < 2) {
+                nameError.textContent = 'Name must be at least 2 characters long';
+                isValid = false;
+            }
+            
+            // Validate email
+            if (!email) {
+                emailError.textContent = 'Email is required';
+                isValid = false;
+            } else if (!isValidEmail(email)) {
+                emailError.textContent = 'Please enter a valid email address';
+                isValid = false;
+            }
+            
+            if (isValid) {
+                // Disable button and show loading state
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Creating...';
+                
+                // Submit the form
+                this.submit();
+            }
+        });
+        
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+        
+        // Clear errors when user starts typing
+        document.getElementById('name').addEventListener('input', function() {
+            document.getElementById('nameError').textContent = '';
+        });
+        
+        document.getElementById('email').addEventListener('input', function() {
+            document.getElementById('emailError').textContent = '';
+        });
+    </script>
+</body>
+</html>

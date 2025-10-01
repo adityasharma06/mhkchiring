@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Exam</title>
+  <style>
+    .module { margin-bottom: 20px; }
+    .question { margin: 10px 0; }
+    video { position: fixed; top: 10px; right: 10px; width: 200px; }
+  </style>
+  <script>
+    // Basic proctoring (placeholder)
+    window.onload = async () => {
+      const video = document.getElementById('webcam');
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+      } catch (err) {
+        alert('Please enable webcam for proctoring');
+      }
+      // Prevent tab switching/screenshots (basic)
+      window.addEventListener('blur', () => {
+        alert('Warning: Do not switch tabs');
+        // Log activity to server (TODO)
+      });
+      document.addEventListener('contextmenu', e => e.preventDefault());
+    };
+  </script>
+</head>
+<body>
+  <h1>Exam for <%= candidate.email %></h1>
+  <video id="webcam" autoplay></video>
+  
+  <!-- Writing Skills -->
+  <div class="module">
+    <h2>Writing Skills</h2>
+    <% questions.writing.forEach(q => { %>
+      <div class="question">
+        <p><%= q.question %></p>
+        <form action="/candidate/<%= candidate.token %>/submit-module" method="POST">
+          <input type="hidden" name="module" value="writing">
+          <input type="hidden" name="questionId" value="<%= q.id %>">
+          <textarea name="answers[<%= q.id %>]" required></textarea>
+          <button type="submit">Submit Writing</button>
+        </form>
+      </div>
+    <% }); %>
+  </div>
+
+  <!-- Political Vision (MCQ) -->
+  <div class="module">
+    <h2>Political Vision</h2>
+    <% questions.political.forEach(q => { %>
+      <div class="question">
+        <p><%= q.question %></p>
+        <form action="/candidate/<%= candidate.token %>/submit-module" method="POST">
+          <input type="hidden" name="module" value="political">
+          <% q.options.forEach(opt => { %>
+            <label>
+              <input type="radio" name="answers[<%= q.id %>]" value="<%= opt.text %>" required>
+              <%= opt.text %>
+            </label><br>
+          <% }); %>
+          <button type="submit">Submit Political</button>
+        </form>
+      </div>
+    <% }); %>
+  </div>
+
+  <!-- Aptitude -->
+  <div class="module">
+    <h2>Aptitude</h2>
+    <% questions.aptitude.forEach(q => { %>
+      <div class="question">
+        <p><%= q.question %></p>
+        <form action="/candidate/<%= candidate.token %>/submit-module" method="POST">
+          <input type="hidden" name="module" value="aptitude">
+          <input type="hidden" name="questionId" value="<%= q.id %>">
+          <input type="text" name="answers[<%= q.id %>]" required>
+          <button type="submit">Submit Aptitude</button>
+        </form>
+      </div>
+    <% }); %>
+  </div>
+
+  <form action="/candidate/<%= candidate.token %>/start-exam" method="POST">
+    <button type="submit">Start Exam</button>
+  </form>
+</body>
+</html>
