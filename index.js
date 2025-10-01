@@ -3,35 +3,49 @@ const express = require("express");
 const crypto = require('crypto');
 const session = require('express-session');
 const path = require('path');
-const multer = require('multer'); // For handling file uploads (video recordings)
+const multer = require('multer');
 
-const serviceAccount = require("./serviceAccountKey.json");
+// Load environment variables
+require('dotenv').config({ debug: true });
 
-let adminConfig;
-if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-  // Deployed env (Render/Heroku/etc.)
-  adminConfig = {
-    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
-    databaseURL: process.env.FIREBASE_DATABASE_URL || "https://new-project-2f782.firebaseio.com",
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "new-project-2f782.appspot.com"
-  };
-} else {
-  // Local dev
-  const serviceAccount = require("./serviceAccountKey.json");
-  adminConfig = {
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://new-project-2f782.firebaseio.com",
-    storageBucket: "new-project-2f782.appspot.com"
-  };
+// Validate required environment variables
+if (!process.env.FIREBASE_PRIVATE_KEY) {
+  throw new Error("FIREBASE_PRIVATE_KEY not found in environment variables");
 }
 
-admin.initializeApp(adminConfig);
+console.log("🔧 Initializing Firebase with environment variables...");
+
+// Initialize Firebase Admin SDK
+try {
+  const serviceAccount = {
+    type: process.env.FIREBASE_TYPE,
+    project_id: process.env.FIREBASE_PROJECT_ID,
+    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    client_email: process.env.FIREBASE_CLIENT_EMAIL,
+    client_id: process.env.FIREBASE_CLIENT_ID,
+    auth_uri: process.env.FIREBASE_AUTH_URI,
+    token_uri: process.env.FIREBASE_TOKEN_URI,
+    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_CERT_URL,
+    client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
+    universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN
+  };
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: process.env.FIREBASE_DATABASE_URL,
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+  });
+  
+  console.log("✅ Firebase initialized successfully with environment variables");
+} catch (error) {
+  console.error("❌ Error initializing Firebase:", error.message);
+}
 
 const db = admin.firestore();
-const bucket = admin.storage().bucket(); // Firebase Storage bucket for recordings
+const bucket = admin.storage().bucket();
 const app = express();
 
-// Configurable base URL for assessment links (set via env var for production/public access)
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 // Debugging middleware
@@ -885,7 +899,7 @@ app.post('/candidate/:token/submit-module', upload.single('video'), async (req, 
   const { token } = req.params;
   const { module } = req.body;
   let answers, timeSpent, proctoringLogsStr;
-  // Parse answers and logs from body
+
   try {
     answers = JSON.parse(req.body.answers || '{}');
     timeSpent = parseInt(req.body.timeSpent) || 0;
@@ -895,91 +909,80 @@ app.post('/candidate/:token/submit-module', upload.single('video'), async (req, 
   }
 
   console.log(`📤 Submitting module: ${module} for token: ${token}`);
-  
+
   try {
     const doc = await db.collection('candidates').doc(token).get();
-    const candidate = doc.data();
-    
-    let score = 0;
-    let maxScore = 0;
-    
-    if (module === 'political' || module === 'aptitude') {
-      const questions = candidate.assignedQuestions[module];
-      questions.forEach(question => {
-        maxScore += 1;
-        const userAnswer = answers[question.id];
-        const correctOption = question.options.find(opt => opt.isCorrect);
-        if (correctOption && userAnswer === correctOption.text) {
-          score += 1;
-        }
-      });
-    } else if (module === 'writing') {
-      score = 0; // Manual review needed
-      maxScore = 2;
+    if (!doc.exists) {
+      return res.status(404).json({ success: false, message: 'Candidate not found' });
     }
 
-    // Upload video if present (download/store in Firebase Storage)
+    const candidate = doc.data();
+    const assignedQuestions = candidate.assignedQuestions[module] || [];
+
+    // ---- Step 1: Evaluate score ----
+    let score = null;
+    let maxScore = null;
+
+    if (module === 'political' || module === 'aptitude') {
+      score = 0;
+      maxScore = assignedQuestions.length;
+
+      assignedQuestions.forEach(q => {
+        const givenAnswer = answers[q.id];
+        const correctOption = q.options?.find(opt => opt.isCorrect);
+        if (givenAnswer && correctOption && givenAnswer === correctOption.text) {
+          score++;
+        }
+      });
+    }
+
+    // ---- Step 2: Upload video (if present) ----
     let videoUrl = null;
     if (req.file) {
-      const fileName = `${token}_${module}_${Date.now()}.webm`;
+      const fileName = `recordings/${token}/${module}-${Date.now()}.webm`;
       const file = bucket.file(fileName);
-      const stream = file.createWriteStream({
-        metadata: {
-          contentType: req.file.mimetype,
-          metadata: { module }
-        }
+
+      await file.save(req.file.buffer, {
+        contentType: req.file.mimetype,
+        metadata: { firebaseStorageDownloadTokens: token }
       });
-      stream.end(req.file.buffer);
-      await new Promise((resolve, reject) => {
-        stream.on('finish', async () => {
-          await file.makePublic();
-          videoUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
-          resolve();
-        });
-        stream.on('error', reject);
-      });
-      console.log(`📹 Video uploaded to Firebase Storage: ${videoUrl}`);
+
+      videoUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(fileName)}?alt=media&token=${token}`;
     }
 
-    const updateData = {
+    // ---- Step 3: Update candidate record ----
+    await db.collection('candidates').doc(token).update({
       [`answers.${module}`]: answers,
-      [`scores.${module}`]: score,
-      [`timeSpent.${module}`]: timeSpent,
-      [`proctoringLogs.${module}`]: admin.firestore.FieldValue.arrayUnion(...proctoringLogsStr),
+      [`scores.${module}`]: score !== null ? score : null,
       [`videoUrls.${module}`]: videoUrl,
+      [`proctoringLogs.${module}`]: admin.firestore.FieldValue.arrayUnion(...proctoringLogsStr),
+      currentModule: module,
       activity: admin.firestore.FieldValue.arrayUnion(
-        `${module} module completed - Score: ${score}/${maxScore} - Time: ${timeSpent}s - Violations: ${proctoringLogsStr.length}`
+        `Module ${module} submitted at ${new Date().toISOString()} (timeSpent=${timeSpent}s, score=${score ?? 'N/A'})`
       )
-    };
-    
-    // Determine next module or mark as completed
+    });
+
+    // ---- Step 4: Decide next module ----
     const moduleOrder = ['writing', 'political', 'aptitude'];
     const currentIndex = moduleOrder.indexOf(module);
-    const nextModule = moduleOrder[currentIndex + 1];
-    
-    if (nextModule) {
-      updateData.currentModule = nextModule;
+
+    let nextModule = null;
+    if (currentIndex >= 0 && currentIndex < moduleOrder.length - 1) {
+      nextModule = moduleOrder[currentIndex + 1];
+      await db.collection('candidates').doc(token).update({ currentModule: nextModule });
     } else {
-      updateData.examCompleted = true;
-      updateData.completedAt = new Date();
-      updateData.currentModule = null;
+      // Last module completed
+      await db.collection('candidates').doc(token).update({
+        examCompleted: true,
+        completedAt: new Date(),
+        activity: admin.firestore.FieldValue.arrayUnion(`Assessment completed at ${new Date().toISOString()}`)
+      });
     }
-    
-    await db.collection('candidates').doc(token).update(updateData);
-    
-    console.log(`✅ Module ${module} submitted. Score: ${score}/${maxScore}. Video: ${videoUrl ? 'uploaded' : 'none'}. Next: ${nextModule || 'completed'}`);
-    
-    res.json({ 
-      success: true, 
-      score, 
-      maxScore,
-      nextModule,
-      completed: !nextModule,
-      message: 'Module submitted successfully' 
-    });
+
+    res.json({ success: true, nextModule });
   } catch (error) {
-    console.error('Error submitting module:', error);
-    res.status(500).json({ success: false, message: 'Error submitting module' });
+    console.error('❌ Error submitting module:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
