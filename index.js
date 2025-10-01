@@ -7,11 +7,25 @@ const multer = require('multer'); // For handling file uploads (video recordings
 
 const serviceAccount = require("./serviceAccountKey.json");
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://new-project-2f782.firebaseio.com",
-  storageBucket: "new-project-2f782.appspot.com" // Assuming default bucket; adjust if needed
-});
+let adminConfig;
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  // Deployed env (Render/Heroku/etc.)
+  adminConfig = {
+    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
+    databaseURL: process.env.FIREBASE_DATABASE_URL || "https://new-project-2f782.firebaseio.com",
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "new-project-2f782.appspot.com"
+  };
+} else {
+  // Local dev
+  const serviceAccount = require("./serviceAccountKey.json");
+  adminConfig = {
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: "https://new-project-2f782.firebaseio.com",
+    storageBucket: "new-project-2f782.appspot.com"
+  };
+}
+
+admin.initializeApp(adminConfig);
 
 const db = admin.firestore();
 const bucket = admin.storage().bucket(); // Firebase Storage bucket for recordings
