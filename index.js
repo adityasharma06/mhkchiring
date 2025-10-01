@@ -555,10 +555,8 @@ app.get("/candidate/:token/module/:module", async (req, res) => {
 
     console.log(`📝 Rendering module: ${module} with ${questions.length} questions`);
 
-    // Create module name for display
     const moduleName = module.charAt(0).toUpperCase() + module.slice(1);
 
-    // Enhanced module page with proctoring, camera recording, fullscreen, etc.
     res.send(`
       <!DOCTYPE html>
       <html>
@@ -749,21 +747,21 @@ app.get("/candidate/:token/module/:module", async (req, res) => {
           </div>
 
           <script>
-            const token = '${token}';
-            const module = '${module}';
+            const token = "${token}";
+            const module = "${module}";
             let mediaRecorder;
             let recordedChunks = [];
             let stream;
             let proctoringLogs = [];
             let timeLeft = 1800; // 30 minutes in seconds
-            const timerElement = document.getElementById('timer');
-            const videoElement = document.getElementById('videoElement');
-            const submitBtn = document.getElementById('submitBtn');
+            const timerElement = document.getElementById("timer");
+            const videoElement = document.getElementById("videoElement");
+            const submitBtn = document.getElementById("submitBtn");
 
             function enterFullscreen() {
               if (document.documentElement.requestFullscreen) {
                 document.documentElement.requestFullscreen().catch(() => {
-                  console.log('Fullscreen request failed, proceeding without fullscreen');
+                  console.log("Fullscreen request failed, proceeding without fullscreen");
                 });
               }
             }
@@ -777,56 +775,65 @@ app.get("/candidate/:token/module/:module", async (req, res) => {
                   if (event.data.size > 0) recordedChunks.push(event.data);
                 };
                 mediaRecorder.start(10000); // Record in 10-second chunks
-                console.log('Recording started');
+                console.log("Recording started");
               } catch (err) {
-                console.warn('Camera access denied, proctoring disabled:', err.message);
+                console.warn("Camera access denied, proctoring disabled:", err.message);
                 proctoringLogs.push(`Camera access denied: ${err.message}`);
-                videoElement.style.display = 'none'; // Hide video element if no access
+                videoElement.style.display = "none"; // Hide video element if no access
               }
             }
 
             function sendProctoringLog() {
               if (proctoringLogs.length > 0) {
-                fetch('/candidate/' + token + '/log-proctoring', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ module, logs: proctoringLogs })
-                }).catch(err => console.error('Log send failed:', err));
+                fetch(`/candidate/${token}/log-proctoring`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ module, logs: proctoringLogs }),
+                }).catch((err) => console.error("Log send failed:", err));
                 proctoringLogs = [];
               }
             }
             setInterval(sendProctoringLog, 30000);
 
-            document.addEventListener('visibilitychange', () => {
+            document.addEventListener("visibilitychange", () => {
               if (document.hidden) {
-                proctoringLogs.push('Tab switched away at ' + new Date().toISOString());
-                alert('Warning: Do not switch tabs!');
+                proctoringLogs.push("Tab switched away at " + new Date().toISOString());
+                alert("Warning: Do not switch tabs!");
               }
             });
 
-            document.addEventListener('fullscreenchange', () => {
+            document.addEventListener("fullscreenchange", () => {
               if (!document.fullscreenElement) {
-                proctoringLogs.push('Exited fullscreen at ' + new Date().toISOString());
-                alert('Warning: Stay in fullscreen mode!');
+                proctoringLogs.push("Exited fullscreen at " + new Date().toISOString());
+                alert("Warning: Stay in fullscreen mode!");
                 enterFullscreen();
               }
             });
 
-            document.addEventListener('keydown', (e) => {
-              if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.shiftKey && e.key === 'C') || (e.ctrlKey && e.shiftKey && e.key === 'J')) {
+            document.addEventListener("keydown", (e) => {
+              if (
+                e.key === "F12" ||
+                (e.ctrlKey && e.shiftKey && e.key === "I") ||
+                (e.ctrlKey && e.shiftKey && e.key === "C") ||
+                (e.ctrlKey && e.shiftKey && e.key === "J")
+              ) {
                 e.preventDefault();
-                proctoringLogs.push('DevTools attempt blocked at ' + new Date().toISOString());
-                alert('Warning: DevTools are disabled!');
+                proctoringLogs.push("DevTools attempt blocked at " + new Date().toISOString());
+                alert("Warning: DevTools are disabled!");
               }
-              if (e.key === 'F5' || e.key === 'F11') e.preventDefault();
+              if (e.key === "F5" || e.key === "F11") e.preventDefault();
             });
-            document.addEventListener('contextmenu', e => e.preventDefault());
+            document.addEventListener("contextmenu", (e) => e.preventDefault());
 
             function updateTimer() {
               const minutes = Math.floor(timeLeft / 60);
               const seconds = timeLeft % 60;
-              timerElement.textContent = 'Time: ' + minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
-              
+              timerElement.textContent =
+                "Time: " +
+                minutes.toString().padStart(2, "0") +
+                ":" +
+                seconds.toString().padStart(2, "0");
+
               if (timeLeft <= 0) {
                 autoSubmit();
               } else {
@@ -834,89 +841,89 @@ app.get("/candidate/:token/module/:module", async (req, res) => {
                 setTimeout(updateTimer, 1000);
               }
             }
-            
+
             function autoSubmit() {
-              alert('Time is up! Submitting your answers...');
+              alert("Time is up! Submitting your answers...");
               submitForm();
             }
 
             function submitForm(retryCount = 0) {
               if (retryCount > 2) {
-                alert('Failed to submit after multiple attempts. Contact support.');
+                alert("Failed to submit after multiple attempts. Contact support.");
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit ${moduleName} Module';
+                submitBtn.textContent = "Submit ${moduleName} Module";
                 return;
               }
 
-              if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+              if (mediaRecorder && mediaRecorder.state !== "inactive") {
                 try {
                   mediaRecorder.stop();
-                  stream.getTracks().forEach(track => track.stop());
+                  stream.getTracks().forEach((track) => track.stop());
                 } catch (err) {
-                  console.warn('Error stopping recorder:', err.message);
+                  console.warn("Error stopping recorder:", err.message);
                 }
               }
 
-              const formData = new FormData(document.getElementById('moduleForm'));
+              const formData = new FormData(document.getElementById("moduleForm"));
               const answers = {};
-              
+
               for (let [key, value] of formData.entries()) {
-                if (key.startsWith('answers[')) {
+                if (key.startsWith("answers[")) {
                   const questionId = key.match(/\\[(.*?)\\]/)?.[1];
-                  if (questionId) answers[questionId] = value || '';
+                  if (questionId) answers[questionId] = value || "";
                 }
               }
 
-              const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
-              formData.append('video', videoBlob, 'recording.webm');
-              formData.append('module', module);
-              formData.append('answers', JSON.stringify(answers || {}));
-              formData.append('timeSpent', 1800 - timeLeft);
-              formData.append('proctoringLogs', JSON.stringify(proctoringLogs || []));
+              const videoBlob = new Blob(recordedChunks, { type: "video/webm" });
+              formData.append("video", videoBlob, "recording.webm");
+              formData.append("module", module);
+              formData.append("answers", JSON.stringify(answers || {}));
+              formData.append("timeSpent", 1800 - timeLeft);
+              formData.append("proctoringLogs", JSON.stringify(proctoringLogs || []));
 
               submitBtn.disabled = true;
-              submitBtn.textContent = 'Submitting...';
-              
-              fetch('/candidate/${token}/submit-module', {
-                method: 'POST',
-                body: formData
+              submitBtn.textContent = "Submitting...";
+
+              fetch(`/candidate/${token}/submit-module`, {
+                method: "POST",
+                body: formData,
               })
-              .then(response => response.json())
-              .then(data => {
-                if (data.success) {
-                  if (data.nextModule) {
-                    window.location.href = '/candidate/${token}/module/' + data.nextModule;
+                .then((response) => response.json())
+                .then((data) => {
+                  if (data.success) {
+                    if (data.nextModule) {
+                      window.location.href = `/candidate/${token}/module/` + data.nextModule;
+                    } else {
+                      window.location.href = `/candidate/${token}/results`;
+                    }
                   } else {
-                    window.location.href = '/candidate/${token}/results';
+                    alert("Error submitting module: " + (data.message || "Unknown error"));
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Submit ${moduleName} Module";
+                    submitForm(retryCount + 1); // Retry on failure
                   }
-                } else {
-                  alert('Error submitting module: ' + (data.message || 'Unknown error'));
+                })
+                .catch((error) => {
+                  console.error("Submission error:", error);
+                  alert("Error submitting module. Retrying...");
                   submitBtn.disabled = false;
-                  submitBtn.textContent = 'Submit ${moduleName} Module';
-                  submitForm(retryCount + 1); // Retry on failure
-                }
-              })
-              .catch(error => {
-                console.error('Submission error:', error);
-                alert('Error submitting module. Retrying...');
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit ${moduleName} Module';
-                submitForm(retryCount + 1); // Retry on network error
-              });
+                  submitBtn.textContent = "Submit ${moduleName} Module";
+                  submitForm(retryCount + 1); // Retry on network error
+                });
             }
-            
-            document.getElementById('moduleForm').addEventListener('submit', function(e) {
+
+            document.getElementById("moduleForm").addEventListener("submit", function (e) {
               e.preventDefault();
               submitForm();
             });
-            
+
             updateTimer();
             enterFullscreen();
             startRecording();
-            
-            window.addEventListener('beforeunload', function (e) {
+
+            window.addEventListener("beforeunload", function (e) {
               e.preventDefault();
-              e.returnValue = '';
+              e.returnValue = "";
             });
           </script>
       </body>
