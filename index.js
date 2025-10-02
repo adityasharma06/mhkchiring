@@ -519,7 +519,6 @@ app.get("/candidate/:token", async (req, res) => {
 app.get("/candidate/:token/module/:module", async (req, res) => {
   const { token, module } = req.params;
   console.log(`📖 Loading module: ${module} for token: ${token}`);
-
   try {
     const doc = await db.collection("candidates").doc(token).get();
     if (!doc.exists) {
@@ -552,7 +551,7 @@ app.get("/candidate/:token/module/:module", async (req, res) => {
     // Capitalize module name for display
     const moduleName = module.charAt(0).toUpperCase() + module.slice(1);
 
-    res.render("module", {
+    res.render("candidate/module", {
       moduleName,
       module,
       questions,
