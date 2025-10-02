@@ -91,6 +91,15 @@
             background: #6c757d;
             cursor: not-allowed;
         }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -100,6 +109,9 @@
     </div>
 
     <div class="container">
+        <div class="warning">
+            ⚠️ Proctoring Note: This assessment may be monitored. Stay in focus and avoid unauthorized actions.
+        </div>
         <form id="assessmentForm">
             <% if (module === 'writing') { %>
                 <% questions.forEach((question, index) => { %>
@@ -141,7 +153,8 @@
         // Timer functionality
         let timeLeft = <%= timeLimit %>;
         const timerElement = document.getElementById('timer');
-        
+        const baseUrl = window.location.origin; // Dynamic base URL
+
         function updateTimer() {
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
@@ -202,7 +215,7 @@
             
             const timeSpent = <%= timeLimit %> - timeLeft;
             
-            fetch('/candidate/<%= candidate.token %>/submit-module', {
+            fetch(`${baseUrl}/candidate/<%= candidate.token %>/submit-module`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -210,25 +223,30 @@
                 body: JSON.stringify({
                     module: '<%= module %>',
                     answers: answers,
-                    timeSpent: timeSpent
+                    timeSpent: timeSpent,
+                    timestamp: new Date().toISOString() // Add current timestamp
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     if (data.nextModule) {
-                        window.location.href = '/candidate/<%= candidate.token %>/module/' + data.nextModule;
+                        window.location.href = `${baseUrl}/candidate/<%= candidate.token %>/module/` + data.nextModule;
                     } else {
-                        window.location.href = '/candidate/<%= candidate.token %>/results';
+                        window.location.href = `${baseUrl}/candidate/<%= candidate.token %>/results`;
                     }
                 } else {
-                    alert('Error submitting module: ' + data.message);
+                    alert('Error submitting module: ' + (data.message || 'Unknown error'));
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Submit <%= moduleName %>';
                 }
             })
             .catch(error => {
-                alert('Error submitting module. Please try again.');
+                console.error('Submission error:', error);
+                alert('Error submitting module. Please try again or check your connection.');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Submit <%= moduleName %>';
             });
@@ -247,13 +265,17 @@
                 }
             });
             
-            // Save to localStorage as backup
-            localStorage.setItem('<%= candidate.token %>_<%= module %>_answers', JSON.stringify(answers));
+            // Save to localStorage with timestamp
+            localStorage.setItem(
+                '<%= candidate.token %>_<%= module %>_answers_' + new Date().toISOString().split('T')[0],
+                JSON.stringify(answers)
+            );
         }, 30000);
         
         // Load saved answers from localStorage
         window.addEventListener('load', () => {
-            const savedAnswers = localStorage.getItem('<%= candidate.token %>_<%= module %>_answers');
+            const today = new Date().toISOString().split('T')[0];
+            const savedAnswers = localStorage.getItem('<%= candidate.token %>_<%= module %>_answers_' + today);
             if (savedAnswers) {
                 const answers = JSON.parse(savedAnswers);
                 Object.keys(answers).forEach(questionId => {
@@ -261,7 +283,6 @@
                     if (input) {
                         input.value = answers[questionId];
                         if (input.type === 'hidden') {
-                            // For MCQs, also update the visual selection
                             const selectedOption = document.querySelector(`[data-question="${questionId}"][data-option="${answers[questionId]}"]`);
                             if (selectedOption) {
                                 selectedOption.classList.add('selected');
