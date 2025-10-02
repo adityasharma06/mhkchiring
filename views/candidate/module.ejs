@@ -1,95 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= moduleName %> - Assessment</title>
+    <title><%= moduleName %> Module - Proctored Assessment</title>
     <style>
         body { 
             font-family: Arial, sans-serif; 
-            margin: 0;
+            max-width: 800px; 
+            margin: 0 auto; 
             padding: 20px;
-            background: #f5f5f5;
-        }
-        .header {
-            background: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .timer {
-            background: #dc3545;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
         .container {
             background: white;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
-        .question {
+        .header {
+            text-align: center;
             margin-bottom: 30px;
-            padding: 20px;
-            border: 1px solid #e9ecef;
-            border-radius: 5px;
-        }
-        .question-number {
-            font-weight: bold;
-            color: #007bff;
-            margin-bottom: 10px;
-        }
-        .options {
-            margin-top: 15px;
-        }
-        .option {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .option:hover {
-            background: #f8f9fa;
-        }
-        .option.selected {
-            background: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
-        textarea {
-            width: 100%;
-            height: 200px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            resize: vertical;
-        }
-        button {
-            background: #28a745;
-            color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 20px;
-        }
-        button:hover {
-            background: #218838;
-        }
-        button:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 15px;
         }
         .warning {
             background: #fff3cd;
@@ -98,199 +33,343 @@
             padding: 10px;
             border-radius: 5px;
             margin-bottom: 20px;
+        }
+        #videoElement {
+            width: 100%;
+            max-width: 400px;
+            margin: 10px auto;
+            display: block;
+            border: 2px solid #dc3545;
+        }
+        .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #dc3545;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 1000;
+        }
+        .question { 
+            margin: 25px 0; 
+            padding: 20px; 
+            border: 2px solid #e9ecef; 
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .question h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        .options label { 
+            display: block; 
+            margin: 10px 0; 
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .options label:hover {
+            border-color: #667eea;
+            background: #e7f3ff;
+        }
+        .options input[type="radio"] {
+            margin-right: 10px;
+        }
+        textarea { 
+            width: 100%; 
+            height: 200px; 
+            padding: 15px; 
+            border: 2px solid #e9ecef;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            resize: vertical;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button { 
+            background: #28a745; 
+            color: white; 
+            padding: 15px 30px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px;
+            font-weight: bold;
+            display: block;
+            margin: 30px auto;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background: #218838;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .progress {
+            margin: 20px 0;
             text-align: center;
+            font-weight: bold;
+            color: #666;
+        }
+        #devtools-detector { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 1px; 
+            height: 1px; 
+            opacity: 0; 
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h2><%= moduleName %></h2>
-        <div class="timer" id="timer">30:00</div>
-    </div>
-
+    <div class="timer" id="timer">Time: 30:00</div>
+    <div id="devtools-detector"></div>
+    
     <div class="container">
-        <div class="warning">
-            ⚠️ Proctoring Note: This assessment may be monitored. Stay in focus and avoid unauthorized actions.
+        <div class="header">
+            <h1><%= moduleName %> Module - Proctored</h1>
+            <p>Candidate: <strong><%= candidate.name %></strong> | Email: <strong><%= candidate.email %></strong> | Position: <%= candidate.position %></p>
+            <div class="warning">
+                <strong>⚠️ Proctoring Active:</strong> Camera is recording. Stay in fullscreen. Do not switch tabs or use devtools. Violations will be logged.
+            </div>
+            <video id="videoElement" autoplay muted playsinline></video>
+            <div class="progress">Module <%= ['writing', 'political', 'aptitude'].indexOf(module) + 1 %> of 3</div>
         </div>
-        <form id="assessmentForm">
-            <% if (module === 'writing') { %>
-                <% questions.forEach((question, index) => { %>
+        
+        <form id="moduleForm">
+            <% if (questions && questions.length > 0) { %>
+                <% questions.forEach((q, index) => { %>
                     <div class="question">
-                        <div class="question-number">Question <%= index + 1 %>:</div>
-                        <div><%= question.question %></div>
-                        <textarea 
-                            name="answers[<%= question.id %>]" 
-                            placeholder="Type your answer here..."
-                            <%= currentAnswers[question.id] ? '' : 'required' %>
-                        ><%= currentAnswers[question.id] || '' %></textarea>
+                        <h3>Question <%= index + 1 %> of <%= questions.length %></h3>
+                        <p><%= q.question %></p>
+                        <% if (module === 'writing') { %>
+                            <textarea name="answers[<%= q.id %>]" placeholder="Type your detailed answer here..." required><%= currentAnswers[q.id] || '' %></textarea>
+                        <% } else { %>
+                            <div class="options">
+                                <% q.options.forEach(opt => { %>
+                                    <label>
+                                        <input type="radio" name="answers[<%= q.id %>]" value="<%= opt.text %>" <%= currentAnswers[q.id] === opt.text ? 'checked' : '' %> required>
+                                        <%= opt.text %>
+                                    </label>
+                                <% }) %>
+                            </div>
+                        <% } %>
                     </div>
-                <% }); %>
+                <% }) %>
             <% } else { %>
-                <% questions.forEach((question, index) => { %>
-                    <div class="question">
-                        <div class="question-number">Question <%= index + 1 %>:</div>
-                        <div><%= question.question %></div>
-                        <div class="options">
-                            <% question.options.forEach((option, optIndex) => { %>
-                                <div class="option <%= currentAnswers[question.id] === option.text ? 'selected' : '' %>" 
-                                     data-question="<%= question.id %>" 
-                                     data-option="<%= option.text %>">
-                                    <%= String.fromCharCode(65 + optIndex) %>. <%= option.text %>
-                                </div>
-                            <% }); %>
-                        </div>
-                        <input type="hidden" name="answers[<%= question.id %>]" 
-                               value="<%= currentAnswers[question.id] || '' %>">
-                    </div>
-                <% }); %>
+                <p>No questions available for this module. Please contact administrator.</p>
             <% } %>
             
-            <button type="submit" id="submitBtn">Submit <%= moduleName %></button>
+            <button type="submit" id="submitBtn">
+                Submit <%= moduleName %> Module
+            </button>
         </form>
     </div>
 
     <script>
-        // Timer functionality
+        // Proctoring and Exam Features
+        const token = '<%= candidate.token %>';
+        const module = '<%= module %>';
+        let mediaRecorder;
+        let recordedChunks = [];
+        let stream;
+        let proctoringLogs = [];
         let timeLeft = <%= timeLimit %>;
         const timerElement = document.getElementById('timer');
-        const baseUrl = window.location.origin; // Dynamic base URL
+        const videoElement = document.getElementById('videoElement');
+        const submitBtn = document.getElementById('submitBtn');
 
+        // Enforce Fullscreen
+        function enterFullscreen() {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log('Fullscreen error:', err);
+                });
+            }
+        }
+
+        // Camera and Recording
+        async function startRecording() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 640, height: 480 }, 
+                    audio: true 
+                });
+                videoElement.srcObject = stream;
+                
+                // Set up media recorder
+                const options = { mimeType: 'video/webm;codecs=vp9,opus' };
+                mediaRecorder = new MediaRecorder(stream, options);
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.start(1000); // Collect data every second
+                console.log('Recording started');
+                proctoringLogs.push('Recording started at ' + new Date().toISOString());
+            } catch (err) {
+                console.error('Camera access error:', err);
+                proctoringLogs.push('Camera access denied: ' + err.message);
+                alert('Camera access is required for proctoring. Please allow camera access and refresh the page.');
+            }
+        }
+
+        // Proctoring Logs Sender
+        function sendProctoringLog() {
+            if (proctoringLogs.length > 0) {
+                fetch('/candidate/' + token + '/log-proctoring', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ module, logs: proctoringLogs })
+                }).catch(err => console.error('Log send failed:', err));
+                proctoringLogs = [];
+            }
+        }
+        setInterval(sendProctoringLog, 30000);
+
+        // Tab Switch Detection
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                const log = 'Tab switched away at ' + new Date().toISOString();
+                proctoringLogs.push(log);
+                alert('Warning: Do not switch tabs!');
+            }
+        });
+
+        // Fullscreen Change Detection
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                const log = 'Exited fullscreen at ' + new Date().toISOString();
+                proctoringLogs.push(log);
+                alert('Warning: Stay in fullscreen mode!');
+                enterFullscreen();
+            }
+        });
+
+        // Disable DevTools and special keys
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                (e.ctrlKey && e.shiftKey && e.key === 'C') || 
+                (e.ctrlKey && e.shiftKey && e.key === 'J') ||
+                (e.ctrlKey && e.key === 'u')) {
+                e.preventDefault();
+                proctoringLogs.push('DevTools attempt blocked at ' + new Date().toISOString());
+                alert('Warning: Developer tools are disabled during assessment!');
+                return false;
+            }
+        });
+
+        // Disable right-click
+        document.addEventListener('contextmenu', e => e.preventDefault());
+
+        // Timer functionality
         function updateTimer() {
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
-            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            timerElement.textContent = `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             
             if (timeLeft <= 0) {
-                submitForm();
+                autoSubmit();
             } else {
                 timeLeft--;
+                setTimeout(updateTimer, 1000);
             }
         }
         
-        setInterval(updateTimer, 1000);
-        
-        // Handle option selection for MCQs
-        if (document.querySelector('.option')) {
-            document.querySelectorAll('.option').forEach(option => {
-                option.addEventListener('click', function() {
-                    const questionId = this.getAttribute('data-question');
-                    const optionText = this.getAttribute('data-option');
-                    
-                    // Remove selected class from all options in this question
-                    this.parentElement.querySelectorAll('.option').forEach(opt => {
-                        opt.classList.remove('selected');
-                    });
-                    
-                    // Add selected class to clicked option
-                    this.classList.add('selected');
-                    
-                    // Update hidden input
-                    const hiddenInput = this.closest('.question').querySelector('input[type="hidden"]');
-                    hiddenInput.value = optionText;
-                });
-            });
-        }
-        
-        // Form submission
-        document.getElementById('assessmentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        function autoSubmit() {
+            alert('Time is up! Submitting your answers...');
             submitForm();
-        });
-        
+        }
+
         function submitForm() {
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Submitting...';
-            
-            const formData = new FormData(this);
+            // Stop recording
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+
+            const formData = new FormData(document.getElementById('moduleForm'));
             const answers = {};
             
-            // Collect all answers
-            formData.forEach((value, key) => {
+            for (let [key, value] of formData.entries()) {
                 if (key.startsWith('answers[')) {
                     const questionId = key.match(/\[(.*?)\]/)[1];
                     answers[questionId] = value;
                 }
-            });
+            }
+
+            // Create video blob if recording exists
+            const videoBlob = recordedChunks.length > 0 ? new Blob(recordedChunks, { type: 'video/webm' }) : null;
+            const submitData = new FormData();
             
-            const timeSpent = <%= timeLimit %> - timeLeft;
+            if (videoBlob) {
+                submitData.append('video', videoBlob, 'recording.webm');
+            }
+            submitData.append('module', module);
+            submitData.append('answers', JSON.stringify(answers));
+            submitData.append('timeSpent', <%= timeLimit %> - timeLeft);
+            submitData.append('proctoringLogs', JSON.stringify(proctoringLogs));
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
             
-            fetch(`${baseUrl}/candidate/<%= candidate.token %>/submit-module`, {
+            fetch('/candidate/' + token + '/submit-module', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    module: '<%= module %>',
-                    answers: answers,
-                    timeSpent: timeSpent,
-                    timestamp: new Date().toISOString() // Add current timestamp
-                })
+                body: submitData
             })
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     if (data.nextModule) {
-                        window.location.href = `${baseUrl}/candidate/<%= candidate.token %>/module/` + data.nextModule;
+                        window.location.href = '/candidate/' + token + '/module/' + data.nextModule;
                     } else {
-                        window.location.href = `${baseUrl}/candidate/<%= candidate.token %>/results`;
+                        window.location.href = '/candidate/' + token + '/results';
                     }
                 } else {
-                    alert('Error submitting module: ' + (data.message || 'Unknown error'));
+                    alert('Error submitting module: ' + data.message);
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'Submit <%= moduleName %>';
+                    submitBtn.textContent = 'Submit <%= moduleName %> Module';
                 }
             })
             .catch(error => {
                 console.error('Submission error:', error);
-                alert('Error submitting module. Please try again or check your connection.');
+                alert('Error submitting module. Please try again.');
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit <%= moduleName %>';
+                submitBtn.textContent = 'Submit <%= moduleName %> Module';
             });
         }
         
-        // Auto-save progress every 30 seconds
-        setInterval(() => {
-            const form = document.getElementById('assessmentForm');
-            const formData = new FormData(form);
-            const answers = {};
-            
-            formData.forEach((value, key) => {
-                if (key.startsWith('answers[')) {
-                    const questionId = key.match(/\[(.*?)\]/)[1];
-                    answers[questionId] = value;
-                }
-            });
-            
-            // Save to localStorage with timestamp
-            localStorage.setItem(
-                '<%= candidate.token %>_<%= module %>_answers_' + new Date().toISOString().split('T')[0],
-                JSON.stringify(answers)
-            );
-        }, 30000);
-        
-        // Load saved answers from localStorage
-        window.addEventListener('load', () => {
-            const today = new Date().toISOString().split('T')[0];
-            const savedAnswers = localStorage.getItem('<%= candidate.token %>_<%= module %>_answers_' + today);
-            if (savedAnswers) {
-                const answers = JSON.parse(savedAnswers);
-                Object.keys(answers).forEach(questionId => {
-                    const input = document.querySelector(`[name="answers[${questionId}]"]`);
-                    if (input) {
-                        input.value = answers[questionId];
-                        if (input.type === 'hidden') {
-                            const selectedOption = document.querySelector(`[data-question="${questionId}"][data-option="${answers[questionId]}"]`);
-                            if (selectedOption) {
-                                selectedOption.classList.add('selected');
-                            }
-                        }
-                    }
-                });
+        document.getElementById('moduleForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (confirm('Are you sure you want to submit this module? You cannot go back after submission.')) {
+                submitForm();
             }
+        });
+        
+        // Start the timer and proctoring
+        updateTimer();
+        enterFullscreen();
+        startRecording();
+        
+        // Send final logs when leaving
+        window.addEventListener('beforeunload', function (e) {
+            sendProctoringLog();
         });
     </script>
 </body>
