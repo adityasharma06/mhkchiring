@@ -153,7 +153,7 @@
 
         .candidate-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
         }
@@ -230,6 +230,15 @@
             color: #212529;
         }
 
+        .btn-copy {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-copy:hover {
+            background: #138496;
+        }
+
         .success-message {
             background: #d4edda;
             color: #155724;
@@ -237,6 +246,15 @@
             border-radius: 5px;
             margin-bottom: 20px;
             border: 1px solid #c3e6cb;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
         }
 
         .empty-state {
@@ -259,6 +277,12 @@
             <p>Manage candidate assessments and track progress</p>
             <a href="/admin/logout" class="logout-btn">Logout</a>
         </div>
+
+        <% if (locals.error) { %>
+            <div class="error-message">
+                <%= error %>
+            </div>
+        <% } %>
 
         <% if (locals.successMessage) { %>
             <div class="success-message">
@@ -335,7 +359,8 @@
                             
                             <div class="candidate-link">
                                 <strong>Assessment Link:</strong> 
-                                <a href="<%= candidate.link %>" target="_blank"><%= candidate.link %></a>
+                                <a href="/candidate/<%= candidate.token %>" target="_blank">/candidate/<%= candidate.token %></a>
+                                <button class="btn btn-copy" onclick="copyLink('/candidate/<%= candidate.token %>')">Copy Link</button>
                             </div>
                             
                             <div>
@@ -414,6 +439,16 @@
         document.getElementById('email').addEventListener('input', function() {
             document.getElementById('emailError').textContent = '';
         });
+
+        function copyLink(link) {
+            const fullLink = `${window.location.origin}${link}`;
+            navigator.clipboard.writeText(fullLink).then(() => {
+                alert('Assessment link copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy link:', err);
+                alert('Failed to copy link. Please copy it manually.');
+            });
+        }
     </script>
 </body>
 </html>

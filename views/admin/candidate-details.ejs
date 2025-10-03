@@ -83,6 +83,15 @@
             background: #c82333;
         }
 
+        .btn-copy {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-copy:hover {
+            background: #138496;
+        }
+
         .dashboard-content {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -239,12 +248,6 @@
             border-radius: 0 5px 5px 0;
         }
 
-        .activity-time {
-            color: #666;
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-
         .activity-message {
             color: #333;
         }
@@ -347,7 +350,6 @@
             font-size: 14px;
         }
 
-        /* Proctoring Section Styles */
         .proctoring-section {
             margin-top: 20px;
         }
@@ -391,6 +393,63 @@
             padding: 10px;
         }
 
+        .grading-form {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .grading-form label {
+            font-weight: 600;
+            color: #555;
+            margin-right: 10px;
+        }
+
+        .grading-form input {
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            width: 80px;
+        }
+
+        .grading-form input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .grading-form button {
+            background: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .grading-form button:hover {
+            background: #218838;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+
         @media (max-width: 768px) {
             .dashboard-content {
                 grid-template-columns: 1fr;
@@ -422,6 +481,18 @@
             </div>
             <a href="/admin/dashboard" class="btn btn-back">← Back to Dashboard</a>
         </div>
+
+        <% if (locals.error) { %>
+            <div class="error-message">
+                <%= error %>
+            </div>
+        <% } %>
+
+        <% if (locals.success) { %>
+            <div class="success-message">
+                <%= success %>
+            </div>
+        <% } %>
 
         <div class="dashboard-content">
             <!-- Candidate Information -->
@@ -464,7 +535,8 @@
 
                 <div class="assessment-link">
                     <strong>Assessment Link:</strong><br>
-                    <a href="<%= candidate.link %>" target="_blank"><%= candidate.link %></a>
+                    <a href="/candidate/<%= candidate.token %>" target="_blank">/candidate/<%= candidate.token %></a>
+                    <button class="btn btn-copy" onclick="copyLink('/candidate/<%= candidate.token %>')">Copy Link</button>
                 </div>
 
                 <div class="actions-section">
@@ -475,15 +547,26 @@
                     </form>
                     
                     <% if (candidate.examCompleted) { %>
-                        <a href="<%= candidate.link %>" target="_blank" class="btn" style="background: #17a2b8; color: white;">
+                        <a href="/candidate/<%= candidate.token %>/results" target="_blank" class="btn" style="background: #17a2b8; color: white;">
                             📊 View Results
                         </a>
                     <% } else { %>
-                        <a href="<%= candidate.link %>" target="_blank" class="btn" style="background: #28a745; color: white;">
+                        <a href="/candidate/<%= candidate.token %>" target="_blank" class="btn" style="background: #28a745; color: white;">
                             👁️ View Assessment
                         </a>
                     <% } %>
                 </div>
+
+                <% if (candidate.scores.writing === null && candidate.answers.writing) { %>
+                    <div class="grading-form">
+                        <h3>Grade Writing Module</h3>
+                        <form action="/admin/candidate/<%= candidate.token %>/grade-writing" method="POST">
+                            <label>Writing Score (0-2):</label>
+                            <input type="number" name="writingScore" min="0" max="2" step="1" required>
+                            <button type="submit">Submit Grade</button>
+                        </form>
+                    </div>
+                <% } %>
             </div>
 
             <!-- Assessment Scores -->
@@ -495,7 +578,7 @@
                         <div class="score-card">
                             <h3>Writing</h3>
                             <div class="score-value">
-                                <%= candidate.scores.writing !== null ? candidate.scores.writing : 'N/A' %>
+                                <%= candidate.scores.writing !== null ? candidate.scores.writing : 'Pending' %>
                             </div>
                             <div class="score-max">/ 2</div>
                             <div class="progress-bar">
@@ -508,9 +591,9 @@
                             <div class="score-value">
                                 <%= candidate.scores.political !== null ? candidate.scores.political : 'N/A' %>
                             </div>
-                            <div class="score-max">/ 2</div>
+                            <div class="score-max">/ 10</div>
                             <div class="progress-bar">
-                                <div class="progress-fill" style="width: <%= ((candidate.scores.political || 0) / 2) * 100 %>%"></div>
+                                <div class="progress-fill" style="width: <%= ((candidate.scores.political || 0) / 10) * 100 %>%"></div>
                             </div>
                         </div>
                         
@@ -519,16 +602,42 @@
                             <div class="score-value">
                                 <%= candidate.scores.aptitude !== null ? candidate.scores.aptitude : 'N/A' %>
                             </div>
-                            <div class="score-max">/ 2</div>
+                            <div class="score-max">/ 10</div>
                             <div class="progress-bar">
-                                <div class="progress-fill" style="width: <%= ((candidate.scores.aptitude || 0) / 2) * 100 %>%"></div>
+                                <div class="progress-fill" style="width: <%= ((candidate.scores.aptitude || 0) / 10) * 100 %>%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="score-card">
+                            <h3>Current Affairs</h3>
+                            <div class="score-value">
+                                <%= candidate.scores.currentAffairs !== null ? candidate.scores.currentAffairs : 'N/A' %>
+                            </div>
+                            <div class="score-max">/ 10</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: <%= ((candidate.scores.currentAffairs || 0) / 10) * 100 %>%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="score-card">
+                            <h3>Language</h3>
+                            <div class="score-value">
+                                <%= candidate.scores.language !== null ? candidate.scores.language : 'N/A' %>
+                            </div>
+                            <div class="score-max">/ 10</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: <%= ((candidate.scores.language || 0) / 10) * 100 %>%"></div>
                             </div>
                         </div>
                     </div>
 
                     <% 
-                        const totalScore = (candidate.scores.writing || 0) + (candidate.scores.political || 0) + (candidate.scores.aptitude || 0);
-                        const maxScore = 6;
+                        const totalScore = (candidate.scores.writing || 0) + 
+                                         (candidate.scores.political || 0) + 
+                                         (candidate.scores.aptitude || 0) + 
+                                         (candidate.scores.currentAffairs || 0) + 
+                                         (candidate.scores.language || 0);
+                        const maxScore = 42; // 2 (writing) + 10 (political) + 10 (aptitude) + 10 (currentAffairs) + 10 (language)
                         const percentage = (totalScore / maxScore) * 100;
                     %>
                     
@@ -625,7 +734,7 @@
                 <h2>Candidate Answers</h2>
                 <div class="answers-section">
                     <% if (candidate.detailedAnswers && Object.keys(candidate.detailedAnswers).length > 0) { %>
-                        <% ['writing', 'political', 'aptitude'].forEach(mod => { %>
+                        <% ['writing', 'political', 'aptitude', 'currentAffairs', 'language'].forEach(mod => { %>
                             <% if (candidate.detailedAnswers[mod] && candidate.detailedAnswers[mod].length > 0) { %>
                                 <div class="module-answers">
                                     <h4><%= mod.charAt(0).toUpperCase() + mod.slice(1) %> Module</h4>
@@ -640,6 +749,7 @@
                                                     <span class="correct-indicator correct">✅ Correct</span>
                                                 <% } else { %>
                                                     <span class="correct-indicator incorrect">❌ Incorrect</span>
+                                                    <div class="answer-text">Correct: <%= item.correctAnswer %></div>
                                                 <% } %>
                                             <% } %>
                                         </div>
@@ -657,7 +767,7 @@
             <div class="card">
                 <h2>Proctoring & Recordings</h2>
                 <div class="proctoring-section">
-                    <% ['writing', 'political', 'aptitude'].forEach(mod => { %>
+                    <% ['writing', 'political', 'aptitude', 'currentAffairs', 'language'].forEach(mod => { %>
                         <% if ((candidate.videoUrls && candidate.videoUrls[mod]) || (candidate.proctoringLogs && candidate.proctoringLogs[mod] && candidate.proctoringLogs[mod].length > 0)) { %>
                             <div class="proctoring-module">
                                 <h4><%= mod.charAt(0).toUpperCase() + mod.slice(1) %> Module</h4>
@@ -690,7 +800,7 @@
                         <% } %>
                     <% }) %>
 
-                    <% if (!['writing', 'political', 'aptitude'].some(mod => (candidate.videoUrls && candidate.videoUrls[mod]) || (candidate.proctoringLogs && candidate.proctoringLogs[mod] && candidate.proctoringLogs[mod].length > 0))) { %>
+                    <% if (!['writing', 'political', 'aptitude', 'currentAffairs', 'language'].some(mod => (candidate.videoUrls && candidate.videoUrls[mod]) || (candidate.proctoringLogs && candidate.proctoringLogs[mod] && candidate.proctoringLogs[mod].length > 0))) { %>
                         <p class="no-answers">No proctoring data or recordings available yet.</p>
                     <% } %>
                 </div>
@@ -705,6 +815,16 @@
                 window.location.reload();
             }, 30000);
         <% } %>
+
+        function copyLink(link) {
+            const fullLink = `${window.location.origin}${link}`;
+            navigator.clipboard.writeText(fullLink).then(() => {
+                alert('Assessment link copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy link:', err);
+                alert('Failed to copy link. Please copy it manually.');
+            });
+        }
     </script>
 </body>
 </html>

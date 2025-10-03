@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Identity - Assessment</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            color: #333;
+            font-size: 28px;
+        }
+        .candidate-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        .info-item {
+            margin-bottom: 10px;
+            display: flex;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #555;
+            min-width: 100px;
+        }
+        .info-value {
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .submit-btn {
+            width: 100%;
+            background: #28a745;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .submit-btn:hover {
+            background: #218838;
+        }
+        .verification-code {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+            text-align: center;
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ffeaa7;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>Professional Assessment</h1>
+        </div>
+
+        <% if (locals.error) { %>
+            <div class="error-message">
+                <%= error %>
+            </div>
+        <% } %>
+
+        <div class="candidate-info">
+            <h3 style="margin-bottom: 15px; color: #333;">Candidate Information</h3>
+            <div class="info-item">
+                <span class="info-label">Name:</span>
+                <span class="info-value"><%= name %></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Email:</span>
+                <span class="info-value"><%= email %></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Position:</span>
+                <span class="info-value"><%= position %></span>
+            </div>
+        </div>
+
+        <form action="/candidate/<%= token %>/verify" method="POST">
+            <div class="form-group">
+                <label for="code">Verification Code</label>
+                <input 
+                    type="text" 
+                    id="code" 
+                    name="code" 
+                    required 
+                    placeholder="Enter verification code"
+                >
+            </div>
+
+            <div class="verification-code">
+                <strong>Use this code for verification: 123456</strong>
+            </div>
+
+            <button type="submit" class="submit-btn">
+                Verify & Start Assessment
+            </button>
+        </form>
+    </div>
+</body>
+</html>
