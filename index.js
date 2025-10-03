@@ -2662,20 +2662,27 @@ app.post("/candidate/:token/submit-module", upload.single("video"), async (req, 
     }
 
     // Update candidate record
-    await db.collection("candidates").doc(token).update({
+    const updates = {
       [`answers.${module}`]: answers,
       [`scores.${module}`]: score,
       [`videoUrls.${module}`]: videoUrl,
-      [`proctoringLogs.${module}`]: admin.firestore.FieldValue.arrayUnion(
-        ...proctoringLogsStr
-      ),
       currentModule: module,
       activity: admin.firestore.FieldValue.arrayUnion(
         `Module ${module} submitted at ${new Date().toISOString()} (timeSpent=${timeSpent}s, score=${
           score ?? "N/A"
         })`
       ),
-    });
+    };
+
+    // Only include proctoringLogs update if there are logs
+    if (proctoringLogsStr.length > 0) {
+      updates[`proctoringLogs.${module}`] = admin.firestore.FieldValue.arrayUnion(...proctoringLogsStr);
+    } else {
+      // Optionally set to an empty array if no logs are provided
+      updates[`proctoringLogs.${module}`] = [];
+    }
+
+    await db.collection("candidates").doc(token).update(updates);
 
     // Decide next module
     const moduleOrder = ["writing", "political", "aptitude", "currentAffairs", "language"];
