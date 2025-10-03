@@ -8,379 +8,6 @@ const multer = require("multer");
 // Load environment variables
 require("dotenv").config({ debug: true });
 
-// Validate required environment variables
-if (!process.env.FIREBASE_PRIVATE_KEY) {
-  throw new Error("FIREBASE_PRIVATE_KEY not found in environment variables");
-}
-
-console.log("🔧 Initializing Firebase with environment variables...");
-
-// Initialize Firebase Admin SDK
-try {
-  const serviceAccount = {
-    type: process.env.FIREBASE_TYPE,
-    project_id: process.env.FIREBASE_PROJECT_ID,
-    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    client_id: process.env.FIREBASE_CLIENT_ID,
-    auth_uri: process.env.FIREBASE_AUTH_URI,
-    token_uri: process.env.FIREBASE_TOKEN_URI,
-    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_CERT_URL,
-    client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
-    universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN,
-  };
-
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: process.env.FIREBASE_DATABASE_URL,
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  });
-
-  console.log("✅ Firebase initialized successfully with environment variables");
-} catch (error) {
-  console.error("❌ Error initializing Firebase:", error.message);
-}
-
-const db = admin.firestore();
-const bucket = admin.storage().bucket();
-const app = express();
-
-const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
-
-// Debugging middleware
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
-});
-
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true }));
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-
-// Session setup
-app.use(
-  session({
-    secret: "your-session-secret",
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: false },
-  })
-);
-
-// Multer setup for video uploads
-const upload = multer({ storage: multer.memoryStorage() });
-
-// Admin credentials
-const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "##admin123456";
-
-// Helper functions
-function shuffle(array) {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
-function generateUniqueToken() {
-  return crypto.randomBytes(32).toString("hex");
-}
-
-function selectQuestionsForCandidate() {
-  return {
-    writing: shuffle([...questionBanks.writing]).slice(0, 2),
-    political: shuffle([...questionBanks.political]).slice(0, 10),
-    aptitude: shuffle([...questionBanks.aptitude]).slice(0, 10),
-    currentAffairs: shuffle([...questionBanks.currentAffairs]).slice(0, 10),
-    language: shuffle([...questionBanks.language]).slice(0, 10),
-  };
-}
-
-// Admin middleware
-const isAdmin = (req, res, next) => {
-  if (req.session.isAdmin) {
-    next();
-  } else {
-    res.redirect("/admin/login");
-  }
-};
-
-// Routes
-
-// Test route to check if EJS is working
-app.get("/test-template", (req, res) => {
-  res.render("candidate/simple-test", {
-    token: "test-token",
-    name: "Test Candidate",
-    email: "test@example.com",
-  });
-});
-
-// Diagnostic route to check candidate data
-app.get("/debug/candidate/:token", async (req, res) => {
-  const { token } = req.params;
-  try {
-    const doc = await db.collection("candidates").doc(token).get();
-    if (!doc.exists) {
-      return res.json({ error: "Candidate not found" });
-    }
-    const candidate = doc.data();
-    res.json({
-      exists: true,
-      name: candidate.name,
-      email: candidate.email,
-      verified: candidate.verified,
-      examStarted: candidate.examStarted,
-      examCompleted: candidate.examCompleted,
-      currentModule: candidate.currentModule,
-      expiresAt: candidate.expiresAt ? candidate.expiresAt.toDate() : null,
-      assignedQuestions: candidate.assignedQuestions
-        ? Object.keys(candidate.assignedQuestions)
-        : "none",
-    });
-  } catch (error) {
-    res.json({ error: error.message });
-  }
-});
-
-// Admin Login Routes
-app.get("/admin/login", (req, res) => {
-  res.render("admin/login", { error: null });
-});
-
-app.post("/admin/login", (req, res) => {
-  const { username, password } = req.body;
-  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    req.session.isAdmin = true;
-    res.redirect("/admin/dashboard");
-  } else {
-    res.render("admin/login", { error: "Invalid username or password" });
-  }
-});
-
-app.get("/admin/logout", (req, res) => {
-  req.session.destroy();
-  res.redirect("/admin/login");
-});
-
-// Admin Routes
-app.get("/admin/dashboard", isAdmin, async (req, res) => {
-  try {
-    const candidatesSnapshot = await db.collection("candidates").get();
-    const candidates = candidatesSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    res.render("admin/dashboard", {
-      candidates,
-      error: req.query.error || null,
-      successMessage: req.query.success || null,
-    });
-  } catch (error) {
-    console.error("Error fetching candidates:", error);
-    res
-      .status(500)
-      .render("admin/dashboard", { candidates: [], error: "Error fetching candidates" });
-  }
-});
-
-app.post("/admin/create-candidate", isAdmin, async (req, res) => {
-  try {
-    const { email, name, position } = req.body;
-
-    // Server-side validation
-    if (!email || !name) {
-      const candidatesSnapshot = await db.collection("candidates").get();
-      const candidates = candidatesSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      return res.render("admin/dashboard", {
-        candidates,
-        error: "Email and name are required",
-      });
-    }
-
-    // Trim and validate inputs
-    const trimmedEmail = email.trim();
-    const trimmedName = name.trim();
-    const trimmedPosition = position ? position.trim() : "General Candidate";
-
-    if (!trimmedEmail || !trimmedName) {
-      const candidatesSnapshot = await db.collection("candidates").get();
-      const candidates = candidatesSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      return res.render("admin/dashboard", {
-        candidates,
-        error: "Email and name cannot be empty",
-      });
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      const candidatesSnapshot = await db.collection("candidates").get();
-      const candidates = candidatesSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      return res.render("admin/dashboard", {
-        candidates,
-        error: "Please enter a valid email address",
-      });
-    }
-
-    // Check if candidate already exists
-    const existingCandidateQuery = await db
-      .collection("candidates")
-      .where("email", "==", trimmedEmail.toLowerCase())
-      .get();
-
-    if (!existingCandidateQuery.empty) {
-      const candidatesSnapshot = await db.collection("candidates").get();
-      const candidates = candidatesSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      return res.render("admin/dashboard", {
-        candidates,
-        error: "A candidate with this email already exists",
-      });
-    }
-
-    const token = generateUniqueToken();
-    const link = `${BASE_URL}/candidate/${token}`;
-
-    await db.collection("candidates").doc(token).set({
-      email: trimmedEmail.toLowerCase(),
-      name: trimmedName,
-      position: trimmedPosition,
-      token,
-      link,
-      verified: false,
-      examStarted: false,
-      examCompleted: false,
-      currentModule: null,
-      scores: {
-        writing: null,
-        political: null,
-        aptitude: null,
-        currentAffairs: null,
-        language: null,
-      },
-      answers: {},
-      videoUrls: {
-        writing: null,
-        political: null,
-        aptitude: null,
-        currentAffairs: null,
-        language: null,
-      },
-      proctoringLogs: {
-        writing: [],
-        political: [],
-        aptitude: [],
-        currentAffairs: [],
-        language: [],
-      },
-      assignedQuestions: selectQuestionsForCandidate(),
-      activity: [
-        `Candidate created for position: ${trimmedPosition} at ${new Date().toISOString()}`,
-      ],
-      createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Link expires in 7 days
-    });
-
-    console.log(`✅ Assessment link for ${trimmedName} (${trimmedEmail}): ${link}`);
-
-    const candidatesSnapshot = await db.collection("candidates").get();
-    const candidates = candidatesSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    res.render("admin/dashboard", {
-      candidates,
-      successMessage: `Candidate "${trimmedName}" created successfully! Assessment link: ${link}`,
-    });
-  } catch (error) {
-    console.error("❌ Error creating candidate:", error);
-
-    const candidatesSnapshot = await db.collection("candidates").get();
-    const candidates = candidatesSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    res.render("admin/dashboard", {
-      candidates,
-      error: "Error creating candidate. Please try again.",
-    });
-  }
-});
-
-// Reset exam endpoint
-app.post("/admin/candidate/:token/reset-exam", isAdmin, async (req, res) => {
-  const { token } = req.params;
-  try {
-    await db.collection("candidates").doc(token).update({
-      verified: false,
-      examStarted: false,
-      examCompleted: false,
-      currentModule: null,
-      scores: {
-        writing: null,
-        political: null,
-        aptitude: null,
-        currentAffairs: null,
-        language: null,
-      },
-      answers: {},
-      videoUrls: {
-        writing: null,
-        political: null,
-        aptitude: null,
-        currentAffairs: null,
-        language: null,
-      },
-      proctoringLogs: {
-        writing: [],
-        political: [],
-        aptitude: [],
-        currentAffairs: [],
-        language: [],
-      },
-      startTime: null,
-      completedAt: null,
-      assignedQuestions: selectQuestionsForCandidate(),
-      activity: admin.firestore.FieldValue.arrayUnion(
-        `Exam reset by admin at ${new Date().toISOString()}`
-      ),
-    });
-    res.redirect(`/admin/candidate/${token}?success=Exam reset successfully`);
-  } catch (error) {
-    console.error("Error resetting exam:", error);
-    res.redirect(`/admin/candidate/${token}?error=Error resetting exam`);
-  }
-});
-
-// Admin candidate details route
-app.get("/admin/candidate/:token", isAdmin, async (req, res) => {
-  const { token } = req.params;
-  try {
-    const doc = await db.collection("candidates").doc(token).get();
-    if (!doc.exists) {
-      return res.status(404).render("error", { message: "Candidate not found" });
-    }
-    const candidate = doc.data();
-
     const questionBanks = {
   writing: [
     { id: 1, question: "Write an essay on climate change and its impact on global economy (300-400 words)." },
@@ -2407,6 +2034,380 @@ app.get("/admin/candidate/:token", isAdmin, async (req, res) => {
     }
   ]
 };
+
+// Validate required environment variables
+if (!process.env.FIREBASE_PRIVATE_KEY) {
+  throw new Error("FIREBASE_PRIVATE_KEY not found in environment variables");
+}
+
+console.log("🔧 Initializing Firebase with environment variables...");
+
+// Initialize Firebase Admin SDK
+try {
+  const serviceAccount = {
+    type: process.env.FIREBASE_TYPE,
+    project_id: process.env.FIREBASE_PROJECT_ID,
+    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+    client_email: process.env.FIREBASE_CLIENT_EMAIL,
+    client_id: process.env.FIREBASE_CLIENT_ID,
+    auth_uri: process.env.FIREBASE_AUTH_URI,
+    token_uri: process.env.FIREBASE_TOKEN_URI,
+    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_CERT_URL,
+    client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
+    universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN,
+  };
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: process.env.FIREBASE_DATABASE_URL,
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  });
+
+  console.log("✅ Firebase initialized successfully with environment variables");
+} catch (error) {
+  console.error("❌ Error initializing Firebase:", error.message);
+}
+
+const db = admin.firestore();
+const bucket = admin.storage().bucket();
+const app = express();
+
+const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
+
+// Debugging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+// Session setup
+app.use(
+  session({
+    secret: "your-session-secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false },
+  })
+);
+
+// Multer setup for video uploads
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Admin credentials
+const ADMIN_USERNAME = "admin";
+const ADMIN_PASSWORD = "##admin123456";
+
+// Helper functions
+function shuffle(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+function generateUniqueToken() {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+function selectQuestionsForCandidate() {
+  return {
+    writing: shuffle([...questionBanks.writing]).slice(0, 2),
+    political: shuffle([...questionBanks.political]).slice(0, 10),
+    aptitude: shuffle([...questionBanks.aptitude]).slice(0, 10),
+    currentAffairs: shuffle([...questionBanks.currentAffairs]).slice(0, 10),
+    language: shuffle([...questionBanks.language]).slice(0, 10),
+  };
+}
+
+// Admin middleware
+const isAdmin = (req, res, next) => {
+  if (req.session.isAdmin) {
+    next();
+  } else {
+    res.redirect("/admin/login");
+  }
+};
+
+// Routes
+
+// Test route to check if EJS is working
+app.get("/test-template", (req, res) => {
+  res.render("candidate/simple-test", {
+    token: "test-token",
+    name: "Test Candidate",
+    email: "test@example.com",
+  });
+});
+
+// Diagnostic route to check candidate data
+app.get("/debug/candidate/:token", async (req, res) => {
+  const { token } = req.params;
+  try {
+    const doc = await db.collection("candidates").doc(token).get();
+    if (!doc.exists) {
+      return res.json({ error: "Candidate not found" });
+    }
+    const candidate = doc.data();
+    res.json({
+      exists: true,
+      name: candidate.name,
+      email: candidate.email,
+      verified: candidate.verified,
+      examStarted: candidate.examStarted,
+      examCompleted: candidate.examCompleted,
+      currentModule: candidate.currentModule,
+      expiresAt: candidate.expiresAt ? candidate.expiresAt.toDate() : null,
+      assignedQuestions: candidate.assignedQuestions
+        ? Object.keys(candidate.assignedQuestions)
+        : "none",
+    });
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
+// Admin Login Routes
+app.get("/admin/login", (req, res) => {
+  res.render("admin/login", { error: null });
+});
+
+app.post("/admin/login", (req, res) => {
+  const { username, password } = req.body;
+  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    req.session.isAdmin = true;
+    res.redirect("/admin/dashboard");
+  } else {
+    res.render("admin/login", { error: "Invalid username or password" });
+  }
+});
+
+app.get("/admin/logout", (req, res) => {
+  req.session.destroy();
+  res.redirect("/admin/login");
+});
+
+// Admin Routes
+app.get("/admin/dashboard", isAdmin, async (req, res) => {
+  try {
+    const candidatesSnapshot = await db.collection("candidates").get();
+    const candidates = candidatesSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    res.render("admin/dashboard", {
+      candidates,
+      error: req.query.error || null,
+      successMessage: req.query.success || null,
+    });
+  } catch (error) {
+    console.error("Error fetching candidates:", error);
+    res
+      .status(500)
+      .render("admin/dashboard", { candidates: [], error: "Error fetching candidates" });
+  }
+});
+
+app.post("/admin/create-candidate", isAdmin, async (req, res) => {
+  try {
+    const { email, name, position } = req.body;
+
+    // Server-side validation
+    if (!email || !name) {
+      const candidatesSnapshot = await db.collection("candidates").get();
+      const candidates = candidatesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      return res.render("admin/dashboard", {
+        candidates,
+        error: "Email and name are required",
+      });
+    }
+
+    // Trim and validate inputs
+    const trimmedEmail = email.trim();
+    const trimmedName = name.trim();
+    const trimmedPosition = position ? position.trim() : "General Candidate";
+
+    if (!trimmedEmail || !trimmedName) {
+      const candidatesSnapshot = await db.collection("candidates").get();
+      const candidates = candidatesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      return res.render("admin/dashboard", {
+        candidates,
+        error: "Email and name cannot be empty",
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      const candidatesSnapshot = await db.collection("candidates").get();
+      const candidates = candidatesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      return res.render("admin/dashboard", {
+        candidates,
+        error: "Please enter a valid email address",
+      });
+    }
+
+    // Check if candidate already exists
+    const existingCandidateQuery = await db
+      .collection("candidates")
+      .where("email", "==", trimmedEmail.toLowerCase())
+      .get();
+
+    if (!existingCandidateQuery.empty) {
+      const candidatesSnapshot = await db.collection("candidates").get();
+      const candidates = candidatesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      return res.render("admin/dashboard", {
+        candidates,
+        error: "A candidate with this email already exists",
+      });
+    }
+
+    const token = generateUniqueToken();
+    const link = `${BASE_URL}/candidate/${token}`;
+
+    await db.collection("candidates").doc(token).set({
+      email: trimmedEmail.toLowerCase(),
+      name: trimmedName,
+      position: trimmedPosition,
+      token,
+      link,
+      verified: false,
+      examStarted: false,
+      examCompleted: false,
+      currentModule: null,
+      scores: {
+        writing: null,
+        political: null,
+        aptitude: null,
+        currentAffairs: null,
+        language: null,
+      },
+      answers: {},
+      videoUrls: {
+        writing: null,
+        political: null,
+        aptitude: null,
+        currentAffairs: null,
+        language: null,
+      },
+      proctoringLogs: {
+        writing: [],
+        political: [],
+        aptitude: [],
+        currentAffairs: [],
+        language: [],
+      },
+      assignedQuestions: selectQuestionsForCandidate(),
+      activity: [
+        `Candidate created for position: ${trimmedPosition} at ${new Date().toISOString()}`,
+      ],
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Link expires in 7 days
+    });
+
+    console.log(`✅ Assessment link for ${trimmedName} (${trimmedEmail}): ${link}`);
+
+    const candidatesSnapshot = await db.collection("candidates").get();
+    const candidates = candidatesSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    res.render("admin/dashboard", {
+      candidates,
+      successMessage: `Candidate "${trimmedName}" created successfully! Assessment link: ${link}`,
+    });
+  } catch (error) {
+    console.error("❌ Error creating candidate:", error);
+
+    const candidatesSnapshot = await db.collection("candidates").get();
+    const candidates = candidatesSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    res.render("admin/dashboard", {
+      candidates,
+      error: "Error creating candidate. Please try again.",
+    });
+  }
+});
+
+// Reset exam endpoint
+app.post("/admin/candidate/:token/reset-exam", isAdmin, async (req, res) => {
+  const { token } = req.params;
+  try {
+    await db.collection("candidates").doc(token).update({
+      verified: false,
+      examStarted: false,
+      examCompleted: false,
+      currentModule: null,
+      scores: {
+        writing: null,
+        political: null,
+        aptitude: null,
+        currentAffairs: null,
+        language: null,
+      },
+      answers: {},
+      videoUrls: {
+        writing: null,
+        political: null,
+        aptitude: null,
+        currentAffairs: null,
+        language: null,
+      },
+      proctoringLogs: {
+        writing: [],
+        political: [],
+        aptitude: [],
+        currentAffairs: [],
+        language: [],
+      },
+      startTime: null,
+      completedAt: null,
+      assignedQuestions: selectQuestionsForCandidate(),
+      activity: admin.firestore.FieldValue.arrayUnion(
+        `Exam reset by admin at ${new Date().toISOString()}`
+      ),
+    });
+    res.redirect(`/admin/candidate/${token}?success=Exam reset successfully`);
+  } catch (error) {
+    console.error("Error resetting exam:", error);
+    res.redirect(`/admin/candidate/${token}?error=Error resetting exam`);
+  }
+});
+
+// Admin candidate details route
+app.get("/admin/candidate/:token", isAdmin, async (req, res) => {
+  const { token } = req.params;
+  try {
+    const doc = await db.collection("candidates").doc(token).get();
+    if (!doc.exists) {
+      return res.status(404).render("error", { message: "Candidate not found" });
+    }
+    const candidate = doc.data();
+
 
     // Prepare answers display
     const detailedAnswers = {};
