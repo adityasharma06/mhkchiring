@@ -2560,12 +2560,12 @@ app.get("/candidate/:token/module/:module", async (req, res) => {
     const questions = candidate.assignedQuestions[module] || [];
     const currentAnswers = candidate.answers[module] || {};
     // Set time limits
-    const timeLimits = {
-      writing: 300, // 5 minutes
-      political: 600, // 10 minutes
-      aptitude: 600, // 10 minutes
-      currentAffairs: 600, // 10 minutes
-      language: 600, // 10 minutes
+   const timeLimits = {
+      writing: 600, // 10 minutes
+      political: 300, // 5 minutes
+      aptitude: 300, // 5 minutes
+      currentAffairs: 300, // 5 minutes
+      language: 300, // 5 minutes
     };
     const timeLimit = timeLimits[module];
 
@@ -2813,3 +2813,4 @@ app.listen(3000, () => {
   console.log("📊 System ready for candidate assessments");
   console.log(`🔗 Assessment links use BASE_URL: ${BASE_URL}`);
 });
+
