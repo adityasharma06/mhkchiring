@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title><%= moduleName %> Module - Proctored Assessment</title>
+    <title>Module - Proctored Assessment</title>
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -136,8 +136,7 @@
     
     <div class="container">
         <div class="header">
-            <h1><%= moduleName %> Module - Proctored</h1>
-            <p>Candidate: <strong><%= candidate.name %></strong> | Email: <strong><%= candidate.email %></strong> | Position: <%= candidate.position %></p>
+                <p>Candidate: <strong><%= candidate.name %></strong> | Email: <strong><%= candidate.email %></strong> | Position: <%= candidate.position %></p>
             <div class="warning">
                 <strong>⚠️ Proctoring Active:</strong> Camera is recording. Stay in fullscreen. Do not switch tabs or use devtools. Violations will be logged.
             </div>
@@ -170,7 +169,7 @@
             <% } %>
             
             <button type="submit" id="submitBtn">
-                Submit <%= moduleName %> Module
+                Submit Module
             </button>
         </form>
     </div>
@@ -344,14 +343,14 @@
                 } else {
                     alert('Error submitting module: ' + data.message);
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'Submit <%= moduleName %> Module';
+                    submitBtn.textContent = 'Submit  Module';
                 }
             })
             .catch(error => {
                 console.error('Submission error:', error);
                 alert('Error submitting module. Please try again.');
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit <%= moduleName %> Module';
+                submitBtn.textContent = 'Submit Module';
             });
         }
         
