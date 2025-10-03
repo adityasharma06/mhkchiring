@@ -10,17 +10,17 @@ require("dotenv").config({ debug: true });
 
     const questionBanks = {
   writing: [
-    { id: 1, question: "Write an essay on climate change and its impact on global economy (300-400 words)." },
-    { id: 2, question: "Describe your most significant leadership experience and what you learned from it." },
-    { id: 3, question: "Discuss the role of technology in modern education and its future implications." },
-    { id: 4, question: "Write about a social issue you are passionate about and propose solutions." },
-    { id: 5, question: "Explain how artificial intelligence is transforming various industries and its ethical considerations." },
-    { id: 6, question: "Describe a time you faced a major challenge and how you overcame it." },
-    { id: 7, question: "What are the key qualities of effective teamwork? Provide examples from your experience." },
-    { id: 8, question: "Discuss the impact of globalization on local cultures and economies." },
-    { id: 9, question: "Write about a book that significantly influenced your thinking and why." },
-    { id: 10, question: "Explain the importance of diversity and inclusion in modern organizations." }
-  ],
+  { "id": 1, "question": "Draft a concept note for an event on 'Viksit Bharat' highlighting objectives, activities, and expected outcomes." },
+  { "id": 2, "question": "Write a sponsorship pitch email for a 'Swachh Bharat Abhiyan' campaign explaining the sponsor's benefits." },
+  { "id": 3, "question": "Prepare a proposal note for a school event on 'Civic Sense' with student and parent involvement." },
+  { "id": 4, "question": "Compose a follow-up email to a potential partner after discussing collaboration for a cleanliness drive." },
+  { "id": 5, "question": "Draft a pitch note to local leaders seeking support for a 'Viksit Bharat 2047' rally." },
+  { "id": 6, "question": "Write a concept note for a youth seminar on 'Nation Building' under the Viksit Bharat mission." },
+  { "id": 7, "question": "Prepare a thank-you email to sponsors/partners after a successful Swachh Bharat event." },
+  { "id": 8, "question": "Draft a proposal note for organizing a nukkad natak (street play) on waste management and civic sense." },
+  { "id": 9, "question": "Write an invitation email to schools/colleges for a poster competition on Civic Sense and cleanliness." },
+  { "id": 10, "question": "Prepare a collaboration proposal for NGOs and local authorities to co-host a 'Clean & Green City' drive." }
+],
   political: [
     // First 20 questions (from previous set)
     {
